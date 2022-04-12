@@ -1,0 +1,982 @@
+{
+	"info": {
+		"_postman_id": "3f01da56-ee7f-422a-bd64-3ef072fdf8fd",
+		"name": "PingOne Use Case: Add a User through a Registration Form",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Step 1: Create an application",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = JSON.parse(responseBody);",
+							"postman.setEnvironmentVariable(\"RegistrationFormAppID\", jsonData.id);",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"name\": \"RegistrationFormApp_{{$timestamp}}\",\n  \"enabled\": true,\n  \"type\": \"WEB_APP\",\n  \"protocol\": \"OPENID_CONNECT\",\n  \"responseTypes\": [\n    \"CODE\"\n  ],\n  \"grantTypes\": [\n    \"AUTHORIZATION_CODE\"\n  ],\n  \"tokenEndpointAuthMethod\": \"CLIENT_SECRET_BASIC\",\n  \"postLogoutRedirectUris\": [\n    \"https://www.example.com\"\n  ],\n  \"redirectUris\": [\n      \"https://www.google.com\"\n      ]\n}"
+				},
+				"url": {
+					"raw": "{{apiPath}}/environments/{{envID}}/applications",
+					"host": [
+						"{{apiPath}}"
+					],
+					"path": [
+						"environments",
+						"{{envID}}",
+						"applications"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Step 2: Create a population for registration form users",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 201\", function() {",
+							"    pm.response.to.have.status(201);",
+							"});",
+							"",
+							"pm.test(\"Response body JSON contains name and id strings\", function() {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData.name).to.be.a('string');",
+							"    pm.expect(jsonData.id).to.be.a('string');",
+							"    pm.environment.set(\"registrationFormPopID\", jsonData.id);",
+							"    console.log(\"registrationFormPopID is now: \" + pm.environment.get(\"registrationFormPopID\"));",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "content-type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"name\": \"RegistrationFormUserPopulation_{{$timestamp}}\",\n    \"description\": \"Population for registration users through a registration form\"\n}"
+				},
+				"url": {
+					"raw": "{{apiPath}}/environments/{{envID}}/populations",
+					"host": [
+						"{{apiPath}}"
+					],
+					"path": [
+						"environments",
+						"{{envID}}",
+						"populations"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Step 3: Create a registration form",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = JSON.parse(responseBody);",
+							"postman.setEnvironmentVariable(\"registrationFormID\", jsonData.id);",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"name\": \"Registration-Form_{{$timestamp}}\",\n  \"category\": \"REGISTRATION\",\n  \"components\": {\n    \"fields\": [\n      {\n        \"type\": \"TEXTBLOB\",\n        \"position\": {\n          \"row\": 0,\n          \"col\": 0\n        },\n        \"content\": \"<h1>Create Your Profile</h1><br><p>Enter the required information below</p>\"\n      },\n      {\n        \"type\": \"TEXT\",\n        \"position\": {\n          \"row\": 1,\n          \"col\": 0\n        },\n        \"label\": \"Username\",\n        \"key\": \"user.username\",\n        \"required\": true,\n        \"validation\": {\n          \"type\": \"NONE\",\n          \"regex\": \"\",\n          \"errorMessage\": \"\"\n        }\n      },\n      {\n        \"type\": \"TEXT\",\n        \"position\": {\n          \"row\": 2,\n          \"col\": 0\n        },\n        \"label\": \"Email Address\",\n        \"key\": \"user.email\",\n        \"required\": true,\n        \"validation\": {\n          \"type\": \"NONE\",\n          \"regex\": \"\",\n          \"errorMessage\": \"\"\n        }\n      },\n      {\n        \"type\": \"PASSWORD_VERIFY\",\n        \"position\": {\n          \"row\": 3,\n          \"col\": 0\n        },\n        \"label\": \"Password\",\n        \"key\": \"user.password\",\n        \"required\": true,\n        \"validation\": {\n          \"type\": \"NONE\",\n          \"regex\": \"\",\n          \"errorMessage\": \"\"\n        },\n        \"labelPasswordVerify\": \"Verify Password\"\n      }\n    ],\n    \"button\": {\n      \"text\": \"Submit\"\n    }\n  },\n  \"cols\": 4,\n  \"markOptional\": true,\n  \"markRequired\": false\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{apiPath}}/environments/{{envID}}/forms",
+					"host": [
+						"{{apiPath}}"
+					],
+					"path": [
+						"environments",
+						"{{envID}}",
+						"forms"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Step 4: Create a flow definition for registration",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 201\", function () {",
+							"  pm.response.to.have.status(201);",
+							"});",
+							"",
+							"pm.test(\"Response body JSON contains name and id strings\", function () {",
+							"  const jsonData = pm.response.json();",
+							"  pm.expect(jsonData.name).to.be.a('string');",
+							"  pm.expect(jsonData.id).to.be.a('string');",
+							"  pm.environment.set(\"flowDefinitionRegFormID\", jsonData.id);",
+							"  console.log(\"flowDefinitionRegFormID is now: \" + pm.environment.get(\"flowDefinitionRegFormID\"));",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"name\": \"Registration-Flow-Definition_{{$timestamp}}\",\n  \"enabled\": true,\n  \"trigger\": {\n    \"type\": \"SIGN_ON_POLICY\",\n    \"next\": \"registrationForm\"\n  },\n  \"stepDefinitions\": {\n    \"createUser\": {\n      \"type\": \"USER_CREATE\",\n      \"configuration\": {\n        \"population\": {\n          \"id\": \"{{registrationFormPopID}}\"\n        },\n        \"lifecycle\": {\n          \"status\": \"VERIFICATION_REQUIRED\"\n        }\n      },\n      \"input\": {\n        \"user\": {\n          \"username\": \"${steps.registrationForm.outputs.formData.user.username}\",\n          \"email\": \"${steps.registrationForm.outputs.formData.user.email}\",\n          \"password\": \"${steps.registrationForm.outputs.formData.user.password}\"\n        }\n      },\n      \"outlets\": {\n        \"SUCCEEDED\": {\n          \"next\": \"verifyEmail\",\n          \"displayName\": \"Succeeded\",\n          \"description\": \"The user was successfully created\"\n        }\n      },\n      \"displayName\": \"Create User\",\n      \"description\": \"This step creates the user with the account information that was collected by the registration form. The user's lifecycle status is set to 'VERIFICATION_REQUIRED', which requires the user to verify their account before they can authenticate with PingOne.\",\n      \"iconUrl\": \"data:image/svg+xml,%3Csvg width='22' height='22' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill='currentColor' d='M15,14C12.33,14 7,15.33 7,18V20H23V18C23,15.33 17.67,14 15,14M6,10V7H4V10H1V12H4V15H6V12H9V10M15,12A4,4 0 0,0 19,8A4,4 0 0,0 15,4A4,4 0 0,0 11,8A4,4 0 0,0 15,12Z' /%3E%3C/svg%3E\"\n    },\n    \"verifyEmail\": {\n      \"type\": \"USER_ACCOUNT_VERIFY\",\n      \"input\": {\n        \"user\": {\n          \"id\": \"${steps.createUser.outputs.user.id}\"\n        }\n      },\n      \"outlets\": {\n        \"VERIFIED\": {\n          \"next\": \"completeFlow\",\n          \"displayName\": \"Verified\",\n          \"description\": \"The account was successfully verified\"\n        }\n      },\n      \"displayName\": \"Verify Email\",\n      \"description\": \"This step presents an account verification form to the user. The user will be able to authenticate with PingOne once they have successfully verified their account.\",\n      \"iconUrl\": \"data:image/svg+xml,%3Csvg width='22' height='22' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill='currentColor' d='M23.5 17L18.5 22L15 18.5L16.5 17L18.5 19L22 15.5L23.5 17M13 18H3V8L11 13L19 8V13H21V6C21 4.9 20.1 4 19 4H3C1.9 4 1 4.9 1 6V18C1 19.1 1.9 20 3 20H13V18M19 6L11 11L3 6H19Z' /%3E%3C/svg%3E\"\n    },\n    \"registrationForm\": {\n      \"type\": \"FORM\",\n      \"configuration\": {\n        \"form\": {\n          \"id\": \"{{registrationFormID}}\"\n        }\n      },\n      \"input\": {\n        \"formData\": {\n          \"user\": {\n            \"username\": \"${flow.inputs.parameters.loginHint}\"\n          }\n        }\n      },\n      \"outlets\": {\n        \"SUBMITTED\": {\n          \"next\": \"createUser\",\n          \"displayName\": \"Submitted\",\n          \"description\": \"The user submitted the form\"\n        }\n      },\n      \"displayName\": \"Registration Form\",\n      \"description\": \"This step presents a registration form to the user to collect their account information. The 'username' field will be pre-populated with the value of the 'loginHint' request parameter, if present.\",\n      \"iconUrl\": \"data:image/svg+xml,%3Csvg width='22' height='22' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill='currentColor' d='M15 5H18L16.5 7L15 5M5 2H19C20.11 2 21 2.9 21 4V20C21 21.11 20.11 22 19 22H5C3.9 22 3 21.11 3 20V4C3 2.9 3.9 2 5 2M5 4V8H19V4H5M5 20H19V10H5V20M7 12H17V14H7V12M7 16H17V18H7V16Z' /%3E%3C/svg%3E\"\n    },\n    \"completeFlow\": {\n      \"type\": \"COMPLETE_FLOW\",\n      \"configuration\": {\n        \"result\": \"COMPLETE\"\n      },\n      \"input\": {\n        \"context\": {\n          \"amr\": [\n            \"pwd\"\n          ],\n          \"user\": {\n            \"id\": \"${steps.createUser.outputs.user.id}\"\n          }\n        }\n      },\n      \"displayName\": \"Complete Flow\",\n      \"description\": \"This step redirects the browser to the URI defined by the 'redirectUri' request parameter, if present. The URI needs to be whitelisted in the trigger configuration in order to redirect to a location outside of PingOne.\",\n      \"iconUrl\": \"data:image/svg+xml,%3Csvg width='22' height='22' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill='currentColor' d='M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z' /%3E%3C/svg%3E\"\n    }\n  }\n}"
+				},
+				"url": {
+					"raw": "{{apiPath}}/environments/{{envID}}/flowDefinitions",
+					"host": [
+						"{{apiPath}}"
+					],
+					"path": [
+						"environments",
+						"{{envID}}",
+						"flowDefinitions"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Step 5: Create the new sign-on policy",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = JSON.parse(responseBody);",
+							"postman.setEnvironmentVariable(\"registrationFormPolicyID\", jsonData.id);",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"name\": \"Registration_Form_Sign-onPolicy_{{$timestamp}}\",\n  \"default\": \"false\",\n  \"description\": \"A new sign-on policy with registration enabled.\"\n}"
+				},
+				"url": {
+					"raw": "{{apiPath}}/environments/{{envID}}/signOnPolicies",
+					"host": [
+						"{{apiPath}}"
+					],
+					"path": [
+						"environments",
+						"{{envID}}",
+						"signOnPolicies"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Step 6: Create the sign-on policy action with registration flow definition",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = JSON.parse(responseBody);",
+							"postman.setEnvironmentVariable(\"registrationFormPolicyActionID\", jsonData.id);",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"priority\": 10,\n    \"type\": \"LOGIN\",\n    \"registration\" : {\n      \"flowDefinition\" : {\n          \"id\" : \"{{flowDefinitionRegFormID}}\"\n      }\n    }\n}"
+				},
+				"url": {
+					"raw": "{{apiPath}}/environments/{{envID}}/signOnPolicies/{{registrationFormPolicyID}}/actions",
+					"host": [
+						"{{apiPath}}"
+					],
+					"path": [
+						"environments",
+						"{{envID}}",
+						"signOnPolicies",
+						"{{registrationFormPolicyID}}",
+						"actions"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Step 7: Assign the sign-on policy to an application",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = JSON.parse(responseBody);",
+							"postman.setEnvironmentVariable(\"registrationFormPolicyAssignmentID\", jsonData.id);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"priority\": 1,\n  \"signOnPolicy\": {\n  \t\"id\": \"{{registrationFormPolicyID}}\"\n  }\n}"
+				},
+				"url": {
+					"raw": "{{apiPath}}/environments/{{envID}}/applications/{{RegistrationFormAppID}}/signOnPolicyAssignments",
+					"host": [
+						"{{apiPath}}"
+					],
+					"path": [
+						"environments",
+						"{{envID}}",
+						"applications",
+						"{{RegistrationFormAppID}}",
+						"signOnPolicyAssignments"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Step 8: Send the authorization request",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"const url = require('url');",
+							"const querystring = require('querystring');",
+							"",
+							"pm.test(\"Status code is 302\", function () {",
+							"  pm.response.to.have.status(302);",
+							"});",
+							"",
+							"const loc = url.parse(pm.response.headers.get(\"Location\"));",
+							"var params = {};",
+							"if (loc.hash) {",
+							"  params = querystring.parse(loc.hash.substring(1));",
+							"} else {",
+							"  params = querystring.parse(loc.query);",
+							"}",
+							"",
+							"pm.test(\"Location header contains a 'flowId' or an auth code\", function () {",
+							"  if (params.flowId) {",
+							"    pm.expect(params.flowId).to.be.a('string');",
+							"    pm.environment.set('flowID', params.flowId);",
+							"    console.log(\"flowID is now: \" + pm.environment.get(\"flowID\"));",
+							"  } else if (params.code) {",
+							"    pm.expect(params.code).to.be.a('string');",
+							"    pm.environment.set(\"authCode\", params.code);",
+							"    console.log(\"authCode is set\");",
+							"  } else if (params.error) {",
+							"    console.log(\"An error occurred!\");",
+							"    console.log(\"Error: \" + params.error);",
+							"    if (params.error_description) {",
+							"      console.log(\"Error description: \" + params.error_description);",
+							"    }",
+							"    pm.expect.fail(\"Location header contains an error.\");",
+							"  } else {",
+							"    console.log(\"Could not find flowId, auth code, or error in Location header value.\");",
+							"    console.log(\"Location: \" + pm.response.headers.get(\"Location\"));",
+							"    pm.expect.fail(\"Could not find flowId, auth code, or error in Location header value.\");",
+							"  }",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{authPath}}/{{envID}}/as/authorize?response_type=code&redirect_uri=https://www.google.com&scope=openid&client_id={{RegistrationFormAppID}}",
+					"host": [
+						"{{authPath}}"
+					],
+					"path": [
+						"{{envID}}",
+						"as",
+						"authorize"
+					],
+					"query": [
+						{
+							"key": "response_type",
+							"value": "code",
+							"description": "Required"
+						},
+						{
+							"key": "redirect_uri",
+							"value": "https://www.google.com"
+						},
+						{
+							"key": "scope",
+							"value": "openid"
+						},
+						{
+							"key": "client_id",
+							"value": "{{RegistrationFormAppID}}"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Step 9: Get the flow",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{authPath}}/{{envID}}/flows/{{flowID}}",
+					"host": [
+						"{{authPath}}"
+					],
+					"path": [
+						"{{envID}}",
+						"flows",
+						"{{flowID}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Step 10: Trigger the flow execution",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 201\", function () {",
+							"  pm.response.to.have.status(201);",
+							"});",
+							"",
+							"pm.test(\"Response body JSON contains state and id strings\", function () {",
+							"  const jsonData = pm.response.json();",
+							"  pm.expect(jsonData.state).to.be.a('string');",
+							"  console.log(\"Flow Execution state is \" + jsonData.state);",
+							"  pm.expect(jsonData.id).to.be.a('string');",
+							"  pm.environment.set(\"flowExID\", jsonData.id);",
+							"  console.log(\"flowExID is now: \" + pm.environment.get(\"flowExID\"));",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/x-www-form-urlencoded",
+						"type": "text"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "urlencoded",
+					"urlencoded": [
+						{
+							"key": "redirectUri",
+							"value": "{{authPath}}/{{envID}}/flows/{{flowID}}/flowExecutionCallback",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{authPath}}/{{envID}}/experiences/{{flowDefinitionRegFormID}}",
+					"host": [
+						"{{authPath}}"
+					],
+					"path": [
+						"{{envID}}",
+						"experiences",
+						"{{flowDefinitionRegFormID}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Step 11: Submit the form",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"  pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Response body JSON contains state and id strings\", function () {",
+							"  const jsonData = pm.response.json();",
+							"  pm.expect(jsonData.state).to.be.a('string');",
+							"  console.log(\"Flow Execution state is \" + jsonData.state);",
+							"  pm.expect(jsonData.id).to.be.a('string');",
+							"  pm.environment.set(\"flowExID\", jsonData.id);",
+							"  console.log(\"flowExID is now: \" + pm.environment.get(\"flowExID\"));",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/vnd.pingidentity.form.submit+json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"user\": {\n    \"username\": \"register-user_{{$timestamp}}\",\n    \"email\": \"{{email}}\",\n    \"password\": \"{{password}}\"\n  }\n}"
+				},
+				"url": {
+					"raw": "{{authPath}}/{{envID}}/flowExecutions/{{flowExID}}",
+					"host": [
+						"{{authPath}}"
+					],
+					"path": [
+						"{{envID}}",
+						"flowExecutions",
+						"{{flowExID}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Step 12: Verify the account",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"  pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Response body JSON contains state and id strings\", function () {",
+							"  const jsonData = pm.response.json();",
+							"  pm.expect(jsonData.state).to.be.a('string');",
+							"  console.log(\"Flow Execution state is \" + jsonData.state);",
+							"  pm.expect(jsonData.id).to.be.a('string');",
+							"  pm.environment.set(\"flowExID\", jsonData.id);",
+							"  console.log(\"flowExID is now: \" + pm.environment.get(\"flowExID\"));",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/vnd.pingidentity.user.verify+json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"verificationCode\": \"xxxxx\"\n}"
+				},
+				"url": {
+					"raw": "{{authPath}}/{{envID}}/flowExecutions/{{flowExID}}",
+					"host": [
+						"{{authPath}}"
+					],
+					"path": [
+						"{{envID}}",
+						"flowExecutions",
+						"{{flowExID}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Step 13: Call the flow execution callback endpoint",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{authPath}}/{{envID}}/flows/{{flowID}}/flowExecutionCallback?flowExecutionId={{flowExID}}",
+					"host": [
+						"{{authPath}}"
+					],
+					"path": [
+						"{{envID}}",
+						"flows",
+						"{{flowID}}",
+						"flowExecutionCallback"
+					],
+					"query": [
+						{
+							"key": "flowExecutionId",
+							"value": "{{flowExID}}"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Step 14: Call the resume endpoint",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"const url = require('url');",
+							"const querystring = require('querystring');",
+							"const Cookie = require('postman-collection').Cookie;",
+							"",
+							"pm.test(\"Status code is 302\", function () {",
+							"  pm.response.to.have.status(302);",
+							"});",
+							"",
+							"const loc = url.parse(pm.response.headers.get(\"Location\"));",
+							"var params = {};",
+							"if (loc.hash) {",
+							"  params = querystring.parse(loc.hash.substring(1));",
+							"} else {",
+							"  params = querystring.parse(loc.query);",
+							"}",
+							"",
+							"pm.test(\"Location header contains an 'access_token' and/or 'id_token', or a 'code'\", function () {",
+							"  if (params.access_token || params.id_token) {",
+							"    if (params.access_token) {",
+							"      pm.expect(params.access_token).to.be.a('string');",
+							"      pm.environment.set(\"oauthToken\", params.access_token);",
+							"      console.log(\"oauthToken is set\");",
+							"    }",
+							"    if (params.id_token) {",
+							"      pm.expect(params.id_token).to.be.a('string');",
+							"      pm.environment.set(\"idToken\", params.id_token);",
+							"      console.log(\"idToken is set\");",
+							"    }",
+							"  } else if (params.code) {",
+							"    pm.expect(params.code).to.be.a('string');",
+							"    pm.environment.set(\"authCode\", params.code);",
+							"    console.log(\"authCode is set\");",
+							"  } else if (params.error) {",
+							"    console.log(\"An error occurred: \");",
+							"    console.log(\"Error: \" + params.error);",
+							"    if (params.error_description) {",
+							"      console.log(\"Error description: \" + params.error_description);",
+							"    }",
+							"    pm.expect.fail();",
+							"  } else {",
+							"    console.log(\"Could not find access token, ID token, or error in Location header value.\");",
+							"    console.log(\"Location: \" + pm.response.headers.get(\"Location\"));",
+							"    pm.expect.fail();",
+							"  }",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Cookie",
+						"value": "ST={{sessionToken}}",
+						"disabled": true
+					},
+					{
+						"description": "Used for browsers that improperly handle SameSite=None",
+						"key": "Cookie",
+						"type": "text",
+						"value": "ST-NO-SS={{sessionToken}}",
+						"disabled": true
+					}
+				],
+				"url": {
+					"raw": "{{authPath}}/{{envID}}/as/resume?flowId={{flowID}}",
+					"host": [
+						"{{authPath}}"
+					],
+					"path": [
+						"{{envID}}",
+						"as",
+						"resume"
+					],
+					"query": [
+						{
+							"key": "flowId",
+							"value": "{{flowID}}"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Step 15: Get the application secret",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = JSON.parse(responseBody);",
+							"postman.setEnvironmentVariable(\"RegistrationFormAppSecret\", jsonData.secret);",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer {{accessToken}}"
+					}
+				],
+				"url": {
+					"raw": "{{apiPath}}/environments/{{envID}}/applications/{{RegistrationFormAppID}}/secret",
+					"host": [
+						"{{apiPath}}"
+					],
+					"path": [
+						"environments",
+						"{{envID}}",
+						"applications",
+						"{{RegistrationFormAppID}}",
+						"secret"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Step 16: Get the access token",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function() {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Response body JSON contains an access_token string\", function() {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData.access_token).to.be.a('string');",
+							"    pm.environment.set(\"accessToken\", jsonData.access_token);",
+							"    console.log(\"accessToken is set\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "{{RegistrationFormAppSecret}}",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "{{RegistrationFormAppID}}",
+							"type": "string"
+						},
+						{
+							"key": "saveHelperData",
+							"type": "any"
+						},
+						{
+							"key": "showPassword",
+							"value": false,
+							"type": "boolean"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/x-www-form-urlencoded"
+					}
+				],
+				"body": {
+					"mode": "urlencoded",
+					"urlencoded": [
+						{
+							"key": "grant_type",
+							"value": "authorization_code",
+							"description": "Required",
+							"type": "text"
+						},
+						{
+							"key": "code",
+							"value": "{{authCode}}",
+							"description": "Required",
+							"type": "text"
+						},
+						{
+							"key": "redirect_uri",
+							"value": "https://www.google.com",
+							"description": "Required",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{authPath}}/{{envID}}/as/token",
+					"host": [
+						"{{authPath}}"
+					],
+					"path": [
+						"{{envID}}",
+						"as",
+						"token"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	]
+}

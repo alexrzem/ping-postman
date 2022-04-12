@@ -1,0 +1,241 @@
+{
+	"info": {
+		"_postman_id": "1251e1da-bfb0-49a2-adce-8147fc6ddaa6",
+		"name": "PingOne Authorize: Make a Decision Request",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Get Token",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"  pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Response body JSON contains an access_token string\", function () {",
+							"  const jsonData = pm.response.json();",
+							"  pm.expect(jsonData.access_token).to.be.a('string');",
+							"  pm.environment.set(\"accessToken\", jsonData.access_token);",
+							"  console.log(\"accessToken is set\");",
+							"});",
+							"",
+							"pm.test(\"Set token to globals\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.globals.set(\"token\", jsonData.access_token);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "{{clientSecret}}",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "{{clientId}}",
+							"type": "string"
+						},
+						{
+							"key": "showPassword",
+							"value": false,
+							"type": "boolean"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/x-www-form-urlencoded"
+					}
+				],
+				"body": {
+					"mode": "urlencoded",
+					"urlencoded": [
+						{
+							"key": "grant_type",
+							"value": "client_credentials",
+							"description": "Required",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{Auth URL}}/{{envId}}/as/token",
+					"host": [
+						"{{Auth URL}}"
+					],
+					"path": [
+						"{{envId}}",
+						"as",
+						"token"
+					]
+				},
+				"description": "Get a token from the auth server using client credentials for a Worker App, and sets the token as a global variable.\n\n#### Request Variables\n\n`envId` is the id of the PingOne environment you want an access token for.\n\n`clientId` is the id of the application created in Ping One.\n\n`clientSecret` is the secret associated with that clientId."
+			},
+			"response": []
+		},
+		{
+			"name": "Make Decision Request",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Connection",
+						"value": "keep-alive"
+					},
+					{
+						"key": "Upgrade-Insecure-Requests",
+						"value": "1",
+						"disabled": true
+					},
+					{
+						"key": "User-Agent",
+						"value": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
+						"disabled": true
+					},
+					{
+						"key": "Accept",
+						"value": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9"
+					},
+					{
+						"key": "Sec-Fetch-Site",
+						"value": "none",
+						"disabled": true
+					},
+					{
+						"key": "Sec-Fetch-Mode",
+						"value": "navigate",
+						"disabled": true
+					},
+					{
+						"key": "Sec-Fetch-Dest",
+						"value": "document",
+						"disabled": true
+					},
+					{
+						"key": "Accept-Language",
+						"value": "en-US,en;q=0.9",
+						"disabled": true
+					},
+					{
+						"key": "Cookie",
+						"value": "license-expiring-age=undefined",
+						"disabled": true
+					},
+					{
+						"key": "x-respond-with",
+						"value": "statements,errors,evaluationLog",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"parameters\": {\n        \"Amount\": \"990\"\n    }\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{API URL}}/v1/environments/{{envId}}/decisionEndpoints/{{endpointId}}",
+					"host": [
+						"{{API URL}}"
+					],
+					"path": [
+						"v1",
+						"environments",
+						"{{envId}}",
+						"decisionEndpoints",
+						"{{endpointId}}"
+					]
+				},
+				"description": "Make a decision request against a decision endpoint.\n\n#### Request Variables\n\n`envId` is the id of the PingOne environment containing the Decision Endpoint.\n\n`endpointId` is the id of the Decision Endpoint.\n\n`token` will be created when you submit the Get Token request\n\n#### Body Schema\n\n```\n{\n    \"parameters\": {\n        \"param1\": \"xxxyyyzzz\",\n        \"param2\": true,\n        \"param3\": 123\n    },\n    \"userContext\": {\n        \"user\": {\n            \"id\": \"xxxx-xxxx-xxxx-xxxx\"\n        },\n        \"environment\": {\n            \"id\": \"xxxx-xxxx-xxxx-xxxx\"\n        }\n    }\n}\n```"
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "Auth URL",
+			"value": "https://auth.pingone.com"
+		},
+		{
+			"key": "API URL",
+			"value": "https://api.pingone.com"
+		},
+		{
+			"key": "envId",
+			"value": ""
+		},
+		{
+			"key": "clientId",
+			"value": ""
+		},
+		{
+			"key": "clientSecret",
+			"value": ""
+		},
+		{
+			"key": "endpointId",
+			"value": ""
+		},
+		{
+			"key": "accessToken",
+			"value": ""
+		}
+	]
+}

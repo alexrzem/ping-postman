@@ -1,0 +1,955 @@
+{
+	"info": {
+		"_postman_id": "7e47ad5f-6efd-4c45-8989-a2eb4964791a",
+		"name": "PingOne Use Case:  Configure an MFA Only Flow Using a Login Hint Token",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Step 1: Create a web application",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = JSON.parse(responseBody);",
+							"postman.setEnvironmentVariable(\"webApp4MfaId\", jsonData.id);",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"type": "text",
+						"value": "Bearer {{bearerToken}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"enabled\": true,\n    \"name\": \"WebAppWithMFA_{{$timestamp}}\",\n    \"description\": \"This is an OIDC Web application.\",\n    \"type\": \"WEB_APP\",\n    \"protocol\": \"OPENID_CONNECT\",\n    \"grantTypes\": [\n        \"AUTHORIZATION_CODE\"\n    ],\n    \"redirectUris\": [\n        \"https://www.google.com\"\n    ],\n    \"responseTypes\": [\n        \"CODE\"\n    ],\n    \"tokenEndpointAuthMethod\": \"CLIENT_SECRET_BASIC\"\n}"
+				},
+				"url": {
+					"raw": "{{apiPath}}/environments/{{envID}}/applications",
+					"host": [
+						"{{apiPath}}"
+					],
+					"path": [
+						"environments",
+						"{{envID}}",
+						"applications"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Step 2: Get the application secret",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = JSON.parse(responseBody);",
+							"postman.setEnvironmentVariable(\"MFAAppSecret\", jsonData.secret);",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer {{accessToken}}"
+					}
+				],
+				"url": {
+					"raw": "{{apiPath}}/environments/{{envID}}/applications/{{webApp4MfaId}}/secret",
+					"host": [
+						"{{apiPath}}"
+					],
+					"path": [
+						"environments",
+						"{{envID}}",
+						"applications",
+						"{{webApp4MfaId}}",
+						"secret"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Step 3: Get all resources",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"  pm.response.to.have.status(200);",
+							"});",
+							"",
+							"const jsonData = pm.response.json();",
+							"const resList = jsonData._embedded.resources;",
+							"",
+							"pm.test(\"Response body JSON's _embedded:resources is an array of objs w/ IDs\", function () {",
+							"  pm.expect(resList).to.be.an('array');",
+							"  if (resList.length > 0) {",
+							"    console.log(\"Found \" + resList.length + \" resource(s)\")",
+							"    resList.forEach((elem) => {",
+							"      pm.expect(elem.id).to.be.a('string');",
+							"    });",
+							"    pm.environment.set(\"resID\", resList[0].id);",
+							"    console.log(\"resID is now: \" + pm.environment.get(\"resID\"));",
+							"  } else {",
+							"    console.log(\"No resources!\");",
+							"  }",
+							"});",
+							"",
+							"pm.test(\"Response body JSON's _embedded:resources has the default resources for each env\", function () {",
+							"  if (resList && resList.length > 1) {",
+							"    const oidcFilter = resList.filter(e => e.name === 'openid');",
+							"    pm.expect(oidcFilter).to.be.an('array').and.have.lengthOf(1);",
+							"    pm.environment.set(\"openidResourceID\", oidcFilter[0].id);",
+							"    console.log(\"openidResourceID is now: \" + pm.environment.get(\"openidResourceID\"));",
+							"",
+							"    const platFilter = resList.filter(e => e.name.toLowerCase().includes('pingone'));",
+							"    pm.expect(platFilter).to.be.an('array').and.have.lengthOf(1);",
+							"    pm.environment.set(\"p1ResID\", platFilter[0].id);",
+							"    console.log(\"p1ResID is now: \" + pm.environment.get(\"p1ResID\"));",
+							"  } else {",
+							"    console.log(\"Problem finding default resources\");",
+							"    pm.expect.fail();",
+							"  }",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"type": "text",
+						"value": "Bearer {{jwtToken}}",
+						"warning": "This is a duplicate header and will be overridden by the Authorization header generated by Postman."
+					}
+				],
+				"url": {
+					"raw": "{{apiPath}}/environments/{{envID}}/resources",
+					"host": [
+						"{{apiPath}}"
+					],
+					"path": [
+						"environments",
+						"{{envID}}",
+						"resources"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Step 4: Get all OIDC Scopes",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function() {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Response body JSON's _embedded:scopes is an array of objs w/ IDs\", function() {",
+							"    const jsonData = pm.response.json();",
+							"    const scopeList = jsonData._embedded.scopes;",
+							"    pm.expect(scopeList).to.be.an('array');",
+							"    if (scopeList.length > 0) {",
+							"        console.log(\"Found \" + scopeList.length + \" Scope(s)\");",
+							"        scopeList.forEach((elem) => {",
+							"            pm.expect(elem.id).to.be.a('string');",
+							"        });",
+							"        pm.environment.set(\"oidcProfileID\", scopeList[0].id);",
+							"        console.log(\"oidcProfileID is now: \" + pm.environment.get(\"oidcProfileID\"));",
+							"    } else {",
+							"        console.log(\"No Scopes!\");",
+							"    }",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{apiPath}}/environments/{{envID}}/resources/{{openidResourceID}}/scopes",
+					"host": [
+						"{{apiPath}}"
+					],
+					"path": [
+						"environments",
+						"{{envID}}",
+						"resources",
+						"{{openidResourceID}}",
+						"scopes"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Step 5: Assign a resource grant to the web application",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"type": "text",
+						"value": "Bearer {{jwtToken}}",
+						"warning": "This is a duplicate header and will be overridden by the Authorization header generated by Postman."
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"resource\": {\n    \t\"id\" : \"{{openidResourceID}}\"\n    },\n    \"scopes\": [{\n    \t\"id\" : \"{{oidcProfileID}}\"\n    }]\n}"
+				},
+				"url": {
+					"raw": "{{apiPath}}/environments/{{envID}}/applications/{{webApp4MfaId}}/grants",
+					"host": [
+						"{{apiPath}}"
+					],
+					"path": [
+						"environments",
+						"{{envID}}",
+						"applications",
+						"{{webApp4MfaId}}",
+						"grants"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Step 6: Create a sign-on policy",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = JSON.parse(responseBody);",
+							"postman.setEnvironmentVariable(\"mfaSignonPolicyID\", jsonData.id);",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"type": "text",
+						"value": "Bearer {{bearerToken}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"name\": \"MFA_TransactionApproval_{{$timestamp}}\",\n  \"default\": \"false\",\n  \"description\": \"A new MFA sign-on policy.\"\n}"
+				},
+				"url": {
+					"raw": "{{apiPath}}/environments/{{envID}}/signOnPolicies",
+					"host": [
+						"{{apiPath}}"
+					],
+					"path": [
+						"environments",
+						"{{envID}}",
+						"signOnPolicies"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Step 7: Create an SMS MFA sign-on policy action",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = JSON.parse(responseBody);",
+							"postman.setEnvironmentVariable(\"mfaSMSActionID\", jsonData.id);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"type": "text",
+						"value": "Bearer {{bearerToken}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"priority\": 5,\n  \"type\": \"MULTI_FACTOR_AUTHENTICATION\",\n  \"sms\": {\n    \"enabled\": true\n  },\n  \"email\": {\n    \"enabled\": false\n  }\n}"
+				},
+				"url": {
+					"raw": "{{apiPath}}/environments/{{envID}}/signOnPolicies/{{mfaSignonPolicyID}}/actions",
+					"host": [
+						"{{apiPath}}"
+					],
+					"path": [
+						"environments",
+						"{{envID}}",
+						"signOnPolicies",
+						"{{mfaSignonPolicyID}}",
+						"actions"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Step 8: Assign the sign-on policy to the web application",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"type": "text",
+						"value": "Bearer {{bearerToken}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"priority\": 1,\n  \"signOnPolicy\": {\n  \t\"id\": \"{{mfaSignonPolicyID}}\"\n  }\n}"
+				},
+				"url": {
+					"raw": "{{apiPath}}/environments/{{envID}}/applications/{{webApp4MfaId}}/signOnPolicyAssignments",
+					"host": [
+						"{{apiPath}}"
+					],
+					"path": [
+						"environments",
+						"{{envID}}",
+						"applications",
+						"{{webApp4MfaId}}",
+						"signOnPolicyAssignments"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Step 9: Create a population for MFA users",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 201\", function() {",
+							"    pm.response.to.have.status(201);",
+							"});",
+							"",
+							"pm.test(\"Response body JSON contains name and id strings\", function() {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData.name).to.be.a('string');",
+							"    pm.expect(jsonData.id).to.be.a('string');",
+							"    pm.environment.set(\"MFAPopID\", jsonData.id);",
+							"    console.log(\"MFAPopID is now: \" + pm.environment.get(\"MFAPopID\"));",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "content-type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"name\": \"MFAPopulation_{{$timestamp}}\",\n    \"description\": \"Population for MFA users\"\n}"
+				},
+				"url": {
+					"raw": "{{apiPath}}/environments/{{envID}}/populations",
+					"host": [
+						"{{apiPath}}"
+					],
+					"path": [
+						"environments",
+						"{{envID}}",
+						"populations"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Step 10: Create user",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 201\", function () {",
+							"    pm.response.to.have.status(201);",
+							"});",
+							"",
+							"pm.test(\"Response body JSON contains createdAt username and id strings\", function () {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData.createdAt).to.be.a('string');",
+							"    pm.expect(jsonData.username).to.be.a('string');",
+							"    pm.expect(jsonData.id).to.be.a('string');",
+							"    pm.environment.set(\"MFAUserID\", jsonData.id);",
+							"    pm.environment.set(\"MFAUsername\", jsonData.username);",
+							"    console.log(\"MFAUserID is now: \" + pm.environment.get(\"MFAUserID\"));",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "content-type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"email\": \"{{email}}\",\n    \"name\": {\n        \"given\": \"Test\",\n        \"family\": \"MFAUser\"\n    },\n    \"population\": {\n        \"id\": \"{{MFAPopID}}\"\n    },\n    \"username\": \"MFA_user_{{$timestamp}}\"\n}"
+				},
+				"url": {
+					"raw": "{{apiPath}}/environments/{{envID}}/users",
+					"host": [
+						"{{apiPath}}"
+					],
+					"path": [
+						"environments",
+						"{{envID}}",
+						"users"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Step 11: Set user password",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/vnd.pingidentity.password.set+json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"value\": \"{{userPassword}}\",\n  \"forceChange\": false\n}"
+				},
+				"url": {
+					"raw": "{{apiPath}}/environments/{{envID}}/users/{{MFAUserID}}/password",
+					"host": [
+						"{{apiPath}}"
+					],
+					"path": [
+						"environments",
+						"{{envID}}",
+						"users",
+						"{{MFAUserID}}",
+						"password"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Step 12: Enable user MFA",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PUT",
+				"header": [
+					{
+						"key": "content-type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"mfaEnabled\": true\n}"
+				},
+				"url": {
+					"raw": "{{apiPath}}/environments/{{envID}}/users/{{MFAUserID}}/mfaEnabled",
+					"host": [
+						"{{apiPath}}"
+					],
+					"path": [
+						"environments",
+						"{{envID}}",
+						"users",
+						"{{MFAUserID}}",
+						"mfaEnabled"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Step 13: Set user device (SMS)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 201\", function () {",
+							"    pm.response.to.have.status(201);",
+							"});",
+							"",
+							"pm.test(\"Response body JSON contains createdAt and id strings\", function () {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData.createdAt).to.be.a('string');",
+							"    pm.expect(jsonData.id).to.be.a('string');",
+							"    pm.environment.set(\"mfaSmsDeviceID\", jsonData.id);",
+							"    console.log(\"mfaSmsDeviceID is now: \" + pm.environment.get(\"mfaSmsDeviceID\"));",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"type\": \"SMS\",\n    \"phone\": \"{{phone}}\"\n}"
+				},
+				"url": {
+					"raw": "{{apiPath}}/environments/{{envID}}/users/{{MFAUserID}}/devices",
+					"host": [
+						"{{apiPath}}"
+					],
+					"path": [
+						"environments",
+						"{{envID}}",
+						"users",
+						"{{MFAUserID}}",
+						"devices"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Step 14: Send authorize request",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = JSON.parse(responseBody);",
+							"postman.setEnvironmentVariable(\"flowID\", jsonData.id);",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true,
+				"followRedirects": false
+			},
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/x-www-form-urlencoded"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "https://auth.pingone.com/{{envID}}/as/authorize?client_id={{webApp4MfaId}}&response_type=code&response_mode=pi.flow&login_hint_token={{loginHintToken}}",
+					"protocol": "https",
+					"host": [
+						"auth",
+						"pingone",
+						"com"
+					],
+					"path": [
+						"{{envID}}",
+						"as",
+						"authorize"
+					],
+					"query": [
+						{
+							"key": "client_id",
+							"value": "{{webApp4MfaId}}"
+						},
+						{
+							"key": "response_type",
+							"value": "code"
+						},
+						{
+							"key": "response_mode",
+							"value": "pi.flow"
+						},
+						{
+							"key": "login_hint_token",
+							"value": "{{loginHintToken}}"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Step 15: Check OTP",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/vnd.pingidentity.otp.check+json"
+					},
+					{
+						"description": "Use this for localhost",
+						"key": "Cookie",
+						"value": "ST={{sessionToken}}",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"otp\": \"xxxxxx\"\n}"
+				},
+				"url": {
+					"raw": "{{authPath}}/{{envID}}/flows/{{flowID}}",
+					"host": [
+						"{{authPath}}"
+					],
+					"path": [
+						"{{envID}}",
+						"flows",
+						"{{flowID}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Step 16: Call the resume endpoint",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = JSON.parse(responseBody);",
+							"postman.setEnvironmentVariable(\"code\", jsonData.authorizeResponse.code);",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Cookie",
+						"value": "ST={{sessionToken}}",
+						"disabled": true
+					},
+					{
+						"description": "Used for browsers that improperly handle SameSite=None",
+						"key": "Cookie",
+						"type": "text",
+						"value": "ST-NO-SS={{sessionToken}}",
+						"disabled": true
+					}
+				],
+				"url": {
+					"raw": "{{authPath}}/{{envID}}/as/resume?flowId={{flowID}}",
+					"host": [
+						"{{authPath}}"
+					],
+					"path": [
+						"{{envID}}",
+						"as",
+						"resume"
+					],
+					"query": [
+						{
+							"key": "flowId",
+							"value": "{{flowID}}"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	]
+}

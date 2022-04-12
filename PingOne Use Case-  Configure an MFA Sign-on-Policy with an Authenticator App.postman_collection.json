@@ -1,0 +1,452 @@
+{
+	"info": {
+		"_postman_id": "8a8a2d67-a3e7-4300-b385-51f9d7e02bb7",
+		"name": "PingOne Use Case:  Configure an MFA Sign-on-Policy with an Authenticator App",
+		"description": "This activity shows you how to define a Web application, create an MFA sign-on policy, and assign the sign-on policy to the application. \n\nThis scenario illustrates the following common operations supported by the PingOne APIs:\n\n* Create an application\n* Assign a resource grant to the application\n* Create a sign-on policy\n* Create a sign-on policy MFA action\n* Assign a sign-on policy to an application\n\n**Workflow order of operations**\n\nTo create the application specify its sign-on policy:\n\n1. Make a `POST` request to the `/environments/{envID}/applications` endpoint to define a new Web application.\n\n2. Make a `GET` request to `/environments/{envID}/resources` to get the list of available resource server IDs.\n\n3. Make a get request to `/environments/{envID}/resources/{resourceID}/scopes` to get the OIDC scopes for the resource grant.\n\n4. Make a `POST` request to `/environments/{envID}/applications/{appID}/grants` to assign a resource grant to the application.\n\n5. Make a `POST` request to the `/environments/{envID}/signOnPolicies` endpoint to create a new sign-on policy.\n\n6. Make a `POST` request to `/environments/{envID}/signOnPolicies/{signOnPolicyID}` to create an MFA sign-on policy action for the new sign-on policy.\n\n7. Make a `POST` request to `/environments/{envID}/applications/{appID}/signOnPolicyAssignments` to assign the MFA sign-on policy with the new Web application.\n\n\n",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Step 1: Create a native application",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = JSON.parse(responseBody);",
+							"postman.setEnvironmentVariable(\"mfaNativeAppId\", jsonData.id);",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"type": "text",
+						"value": "Bearer {{bearerToken}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"enabled\": true,\n    \"name\": \"nativeAppWithMFA_{{$timestamp}}\",\n    \"description\": \"This is an OIDC native application.\",\n    \"type\": \"NATIVE_APP\",\n    \"protocol\": \"OPENID_CONNECT\",\n    \"responseTypes\": [\n        \"TOKEN\",\n        \"ID_TOKEN\"\n    ],\n    \"grantTypes\": [\n        \"IMPLICIT\"\n    ],\n    \"tokenEndpointAuthMethod\": \"NONE\",\n    \"redirectUris\": [\n        \"https://www.google.com\"\n    ],\n    \"bundleId\": \"com.example.something\",\n    \"packageName\": \"org.example.hyphenated_name\"\n}"
+				},
+				"url": {
+					"raw": "{{apiPath}}/environments/{{envID}}/applications",
+					"host": [
+						"{{apiPath}}"
+					],
+					"path": [
+						"environments",
+						"{{envID}}",
+						"applications"
+					]
+				},
+				"description": "---\ncapability: MFA\nroles: ea, cad\n---\n\nThe `POST /environments/{envId}/applications/` creates a new application resource in the specified environment. To define a Web application, you need to specify the following base application attributes: \n\nProperty | Value | \n-------- | --------- |\n`enabled` | true |\n`name` | {{YourAppName}} | \n`type` | WEB_APP |\n\n\nThis web application will use the `OPENID_CONNECT` protocol. OpenID Connect applications require these additional OIDC properties:\n\n\nProperty | Value | \n-------- | --------- | \n`grantTypes` |  AUTHORIZATION_CODE |\n`redirectUris` | https://www.example.com |\n`responseTypes` | CODE |\n`tokenEndpointAuthMethod` | CLIENT_SECRET_BASIC |\n\n"
+			},
+			"response": []
+		},
+		{
+			"name": "Step 2: Get all resources",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"  pm.response.to.have.status(200);",
+							"});",
+							"",
+							"const jsonData = pm.response.json();",
+							"const resList = jsonData._embedded.resources;",
+							"",
+							"pm.test(\"Response body JSON's _embedded:resources is an array of objs w/ IDs\", function () {",
+							"  pm.expect(resList).to.be.an('array');",
+							"  if (resList.length > 0) {",
+							"    console.log(\"Found \" + resList.length + \" resource(s)\")",
+							"    resList.forEach((elem) => {",
+							"      pm.expect(elem.id).to.be.a('string');",
+							"    });",
+							"    pm.environment.set(\"resID\", resList[0].id);",
+							"    console.log(\"resID is now: \" + pm.environment.get(\"resID\"));",
+							"  } else {",
+							"    console.log(\"No resources!\");",
+							"  }",
+							"});",
+							"",
+							"pm.test(\"Response body JSON's _embedded:resources has the default resources for each env\", function () {",
+							"  if (resList && resList.length > 1) {",
+							"    const oidcFilter = resList.filter(e => e.name === 'openid');",
+							"    pm.expect(oidcFilter).to.be.an('array').and.have.lengthOf(1);",
+							"    pm.environment.set(\"openidResourceID\", oidcFilter[0].id);",
+							"    console.log(\"openidResourceID is now: \" + pm.environment.get(\"openidResourceID\"));",
+							"",
+							"    const platFilter = resList.filter(e => e.name.toLowerCase().includes('pingone'));",
+							"    pm.expect(platFilter).to.be.an('array').and.have.lengthOf(1);",
+							"    pm.environment.set(\"p1ResID\", platFilter[0].id);",
+							"    console.log(\"p1ResID is now: \" + pm.environment.get(\"p1ResID\"));",
+							"  } else {",
+							"    console.log(\"Problem finding default resources\");",
+							"    pm.expect.fail();",
+							"  }",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"type": "text",
+						"value": "Bearer {{jwtToken}}",
+						"warning": "This is a duplicate header and will be overridden by the Authorization header generated by Postman."
+					}
+				],
+				"url": {
+					"raw": "{{apiPath}}/environments/{{envID}}/resources",
+					"host": [
+						"{{apiPath}}"
+					],
+					"path": [
+						"environments",
+						"{{envID}}",
+						"resources"
+					]
+				},
+				"description": "---\ncapability: MFA\nroles: ea, cad\n---\n\nResources are the protected endpoints that applications request access to using OAuth 2 authorization services. For this use case, the resource associated with the new application will be `openid`, the OpenID Connect resource.\n\nThe `GET /environments/{environmentId}/resources` returns a list of all resource entities associated with the specified environment. The resource entity ID for `openid` is needed in Step 3 when you create the application's resource access grant.\n\n\nThe response data includes the resource ID for each defined resource entity associated with the specified environment."
+			},
+			"response": []
+		},
+		{
+			"name": "Step 3: Get all OIDC Scopes",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function() {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Response body JSON's _embedded:scopes is an array of objs w/ IDs\", function() {",
+							"    const jsonData = pm.response.json();",
+							"    const scopeList = jsonData._embedded.scopes;",
+							"    pm.expect(scopeList).to.be.an('array');",
+							"    if (scopeList.length > 0) {",
+							"        console.log(\"Found \" + scopeList.length + \" Scope(s)\");",
+							"        scopeList.forEach((elem) => {",
+							"            pm.expect(elem.id).to.be.a('string');",
+							"        });",
+							"        pm.environment.set(\"oidcProfileID\", scopeList[0].id);",
+							"        console.log(\"oidcProfileID is now: \" + pm.environment.get(\"oidcProfileID\"));",
+							"    } else {",
+							"        console.log(\"No Scopes!\");",
+							"    }",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{apiPath}}/environments/{{envID}}/resources/{{openidResourceID}}/scopes",
+					"host": [
+						"{{apiPath}}"
+					],
+					"path": [
+						"environments",
+						"{{envID}}",
+						"resources",
+						"{{openidResourceID}}",
+						"scopes"
+					]
+				},
+				"description": "OpenID Connect scopes control which user claims are included in an access token. This use case requires the `profile` OIDC scope, which provides access to the end-user's default profile claims, such as `name`, `family_name`, `given_name`, `middle_name`,  `preferred_username`, `picture`, `zoneinfo`, `locale`, and `updated_at`. \n\nThe `GET /environments/{environmentId}/resources/{resourceID}/scopes` endpoint returns a list of all scopes associated with the specified resource. The resource entity ID for `openid` is identified in the request URL.\n\n\nThe response data includes the ID for each defined resource scope associated with the associated with the `openid` resource entity."
+			},
+			"response": []
+		},
+		{
+			"name": "Step 4: Assign a resource grant to the application",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"type": "text",
+						"value": "Bearer {{jwtToken}}",
+						"warning": "This is a duplicate header and will be overridden by the Authorization header generated by Postman."
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"resource\": {\n    \t\"id\" : \"{{openidResourceID}}\"\n    },\n    \"scopes\": [{\n    \t\"id\" : \"{{oidcProfileID}}\"\n    }]\n}"
+				},
+				"url": {
+					"raw": "{{apiPath}}/environments/{{envID}}/applications/{{mfaNativeAppId}}/grants",
+					"host": [
+						"{{apiPath}}"
+					],
+					"path": [
+						"environments",
+						"{{envID}}",
+						"applications",
+						"{{mfaNativeAppId}}",
+						"grants"
+					]
+				},
+				"description": "---\ncapability: MFA\nroles: ea, cad\n---\n\nAfter retrieving the `openid` resource ID in Step 2 and the `profile` scope in Step 3, you can use the `POST /environments/{environmentId}/applications/{applicationId}/grants` operation to create a resource access grant for the new Web application.\n\nThe body of the request specifies the ID for the `resource` property (`openid`) and the ID for the `scopes` (`profile`) that you assign to the application resource grant. \n\n\n\nThe response data shows the resource grant ID and the scopes associated with the grant.\n"
+			},
+			"response": []
+		},
+		{
+			"name": "Step 5: Create an MFA sign-on policy",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = JSON.parse(responseBody);",
+							"postman.setEnvironmentVariable(\"mfaPolicyID\", jsonData.id);",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"type": "text",
+						"value": "Bearer {{bearerToken}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"name\": \"MFA_with_TOTP_{{$timestamp}}\",\n  \"default\": \"false\",\n  \"description\": \"A new MFA sign-on policy.\"\n}"
+				},
+				"url": {
+					"raw": "{{apiPath}}/environments/{{envID}}/signOnPolicies",
+					"host": [
+						"{{apiPath}}"
+					],
+					"path": [
+						"environments",
+						"{{envID}}",
+						"signOnPolicies"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Step 6: Create a sign-on policy MFA action",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = JSON.parse(responseBody);",
+							"postman.setEnvironmentVariable(\"mfaActionID\", jsonData.id);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"type": "text",
+						"value": "Bearer {{bearerToken}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"priority\": 10,\n  \"type\": \"MULTI_FACTOR_AUTHENTICATION\",\n  \"condition\": {\n    \"anonymousNetwork\" : [\"1.1.1.1/10\"],\n    \"valid\": \"${flow.request.http.remoteIp}\"\n    },\n  \"recovery\": {\n    \"enabled\": false\n  },\n  \"authenticator\": {\n    \"enabled\": true\n  },\n  \"email\": {\n    \"enabled\": false\n  },\n  \"sms\": {\n    \"enabled\": false\n  },\n \"applications\": [\n    {\n      \"id\": \"{{mfaNativeAppId}}\",\n      \"autoEnrollment\": {\n        \"enabled\": true\n      },\n      \"deviceAuthorization\": {\n        \"enabled\": true,\n        \"extraVerification\": \"permissive\"\n      }\n    }\n  ]\n}"
+				},
+				"url": {
+					"raw": "{{apiPath}}/environments/{{envID}}/signOnPolicies/{{mfaPolicyID}}/actions",
+					"host": [
+						"{{apiPath}}"
+					],
+					"path": [
+						"environments",
+						"{{envID}}",
+						"signOnPolicies",
+						"{{mfaPolicyID}}",
+						"actions"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Step 7: Assign the MFA sign-on policy to the web application",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"type": "text",
+						"value": "Bearer {{bearerToken}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"priority\": 10,\n  \"signOnPolicy\": {\n  \t\"id\": \"{{mfaPolicyID}}\"\n  }\n}"
+				},
+				"url": {
+					"raw": "{{apiPath}}/environments/{{envID}}/applications/{{mfaNativeAppId}}/signOnPolicyAssignments",
+					"host": [
+						"{{apiPath}}"
+					],
+					"path": [
+						"environments",
+						"{{envID}}",
+						"applications",
+						"{{mfaNativeAppId}}",
+						"signOnPolicyAssignments"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	]
+}

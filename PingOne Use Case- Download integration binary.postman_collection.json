@@ -1,0 +1,423 @@
+{
+	"info": {
+		"_postman_id": "701fe265-9549-47ea-a6b2-754940408957",
+		"name": "PingOne Use Case: Download integration binary",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Step 1: Get the Environment ID",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function() {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Response body JSON's _embedded:environments is an array of objs w/ IDs\", function() {",
+							"    const jsonData = pm.response.json();",
+							"    const envList = jsonData._embedded.environments;",
+							"    pm.expect(envList).to.be.an('array');",
+							"    if (envList.length > 0) {",
+							"        console.log(\"Found \" + envList.length + \" Env(s)\");",
+							"        envList.forEach((elem) => {",
+							"            pm.expect(elem.id).to.be.a('string');",
+							"        });",
+							"        pm.environment.set(\"envID\", envList[0].id);",
+							"        console.log(\"envID is now: \" + pm.environment.get(\"envID\"));",
+							"    } else {",
+							"        console.log(\"No Envs!\");",
+							"    }",
+							"});",
+							"",
+							"var template = `<p>{{res.info}}</p>`;",
+							"pm.visualizer.set(template, {",
+							"    res: pm.response.json()",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{apiPath}}/environments?limit=1",
+					"host": [
+						"{{apiPath}}"
+					],
+					"path": [
+						"environments"
+					],
+					"query": [
+						{
+							"key": "limit",
+							"value": "1"
+						}
+					]
+				}
+			},
+			"response": [
+				{
+					"name": "Step 1: Get the Environment ID",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{apiPath}}/environments?limit=1",
+							"host": [
+								"{{apiPath}}"
+							],
+							"path": [
+								"environments"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/hal+json;charset=UTF-8"
+						},
+						{
+							"key": "Content-Length",
+							"value": "4575"
+						},
+						{
+							"key": "Connection",
+							"value": "keep-alive"
+						},
+						{
+							"key": "Date",
+							"value": "Thu, 18 Mar 2021 15:53:37 GMT"
+						},
+						{
+							"key": "x-amzn-RequestId",
+							"value": "27eda2a4-0d29-4178-9185-5d5dc84dd6f5"
+						},
+						{
+							"key": "Access-Control-Allow-Origin",
+							"value": "*"
+						},
+						{
+							"key": "Correlation-Id",
+							"value": "27eda2a4-0d29-4178-9185-5d5dc84dd6f5"
+						},
+						{
+							"key": "Access-Control-Allow-Headers",
+							"value": "Content-Type,Content-Disposition,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,Correlation-Id"
+						},
+						{
+							"key": "x-amz-apigw-id",
+							"value": "cY-cKGRUPHcFbAA="
+						},
+						{
+							"key": "Cache-Control",
+							"value": "no-cache, no-store, max-age=0, must-revalidate"
+						},
+						{
+							"key": "Expires",
+							"value": "0"
+						},
+						{
+							"key": "Access-Control-Allow-Methods",
+							"value": "OPTIONS,GET,POST"
+						},
+						{
+							"key": "X-Amzn-Trace-Id",
+							"value": "Root=1-60537780-014bea972153f375732f6343;Sampled=0"
+						},
+						{
+							"key": "Pragma",
+							"value": "no-cache"
+						},
+						{
+							"key": "Access-Control-Allow-Credentials",
+							"value": "true"
+						},
+						{
+							"key": "X-Cache",
+							"value": "Miss from cloudfront"
+						},
+						{
+							"key": "Via",
+							"value": "1.1 3f7e5e686bf8f19b9c786efbe99c7589.cloudfront.net (CloudFront)"
+						},
+						{
+							"key": "X-Amz-Cf-Pop",
+							"value": "DEN52-C1"
+						},
+						{
+							"key": "X-Amz-Cf-Id",
+							"value": "hmCiEY3xsJqLWVJ7BvUhgtTFZ6vR5OKikXoahPTNMjAvACTuofZ8ew=="
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"_links\": {\n        \"next\": {\n            \"href\": \"https://example.com/v1/environments?cursor=ZW52SWQ9MDMxMjg5NzYtNmRhZi00NjdmLWJmMWYtNjMxZTFmMGQ4Mjhm&limit=1\"\n        },\n        \"self\": {\n            \"href\": \"https://example.com/v1/environments?limit=1\"\n        }\n    },\n    \"_embedded\": {\n        \"environments\": [\n            {\n                \"_links\": {\n                    \"self\": {\n                        \"href\": \"https://example.com/v1/environments/020ed26b-ae15-4783-8fb3-gd65816dc391\"\n                    },\n                    \"license\": {\n                        \"href\": \"https://example.com/v1/organizations/9bd54270-150f-4b2a-bbb6-48dfc002ff5e/licenses/08b0cc35-7fd4-4c1f-9f84-6b323174cc72\"\n                    },\n                    \"organization\": {\n                        \"href\": \"https://example.com/v1/organizations/9bd54270-150f-4b2a-bbb6-48dfc002ff5e\"\n                    },\n                    \"populations\": {\n                        \"href\": \"https://example.com/v1/environments/020ed26b-ae15-4783-8fb3-gd65816dc391/populations\"\n                    },\n                    \"users\": {\n                        \"href\": \"https://example.com/v1/environments/020ed26b-ae15-4783-8fb3-gd65816dc391/users\"\n                    },\n                    \"applications\": {\n                        \"href\": \"https://example.com/v1/environments/020ed26b-ae15-4783-8fb3-gd65816dc391/applications\"\n                    },\n                    \"activities\": {\n                        \"href\": \"https://example.com/v1/environments/020ed26b-ae15-4783-8fb3-gd65816dc391/activities\"\n                    },\n                    \"branding\": {\n                        \"href\": \"https://example.com/v1/environments/020ed26b-ae15-4783-8fb3-gd65816dc391/branding\"\n                    },\n                    \"features\": {\n                        \"href\": \"https://example.com/v1/environments/020ed26b-ae15-4783-8fb3-gd65816dc391/features\"\n                    },\n                    \"resources\": {\n                        \"href\": \"https://example.com/v1/environments/020ed26b-ae15-4783-8fb3-gd65816dc391/resources\"\n                    },\n                    \"passwordPolicies\": {\n                        \"href\": \"https://example.com/v1/environments/020ed26b-ae15-4783-8fb3-gd65816dc391/passwordPolicies\"\n                    },\n                    \"userActivities\": {\n                        \"href\": \"https://example.com/v1/environments/020ed26b-ae15-4783-8fb3-gd65816dc391/userActivities\"\n                    },\n                    \"signOnPolicies\": {\n                        \"href\": \"https://example.com/v1/environments/020ed26b-ae15-4783-8fb3-gd65816dc391/signOnPolicies\"\n                    },\n                    \"keys\": {\n                        \"href\": \"https://example.com/v1/environments/020ed26b-ae15-4783-8fb3-gd65816dc391/keys\"\n                    },\n                    \"templates\": {\n                        \"href\": \"https://example.com/v1/environments/020ed26b-ae15-4783-8fb3-gd65816dc391/templates\"\n                    },\n                    \"notificationsSettings\": {\n                        \"href\": \"https://example.com/v1/environments/020ed26b-ae15-4783-8fb3-gd65816dc391/notificationsSettings\"\n                    },\n                    \"schemas\": {\n                        \"href\": \"https://example.com/v1/environments/020ed26b-ae15-4783-8fb3-gd65816dc391/schemas\"\n                    },\n                    \"gateways\": {\n                        \"href\": \"https://example.com/v1/environments/020ed26b-ae15-4783-8fb3-gd65816dc391/gateways\"\n                    },\n                    \"capabilities\": {\n                        \"href\": \"https://example.com/v1/environments/020ed26b-ae15-4783-8fb3-gd65816dc391/capabilities\"\n                    },\n                    \"activeIdentityCounts\": {\n                        \"href\": \"https://example.com/v1/environments/020ed26b-ae15-4783-8fb3-gd65816dc391/activeIdentityCounts\"\n                    },\n                    \"propagation/plans\": {\n                        \"href\": \"https://example.com/v1/environments/020ed26b-ae15-4783-8fb3-gd65816dc391/propagation/plans\"\n                    },\n                    \"propagation/stores\": {\n                        \"href\": \"https://example.com/v1/environments/020ed26b-ae15-4783-8fb3-gd65816dc391/propagation/stores\"\n                    },\n                    \"propagation/revisions/id:latest\": {\n                        \"href\": \"https://example.com/v1/environments/020ed26b-ae15-4783-8fb3-gd65816dc391/propagation/revisions/id:latest\"\n                    },\n                    \"billOfMaterials\": {\n                        \"href\": \"https://example.com/v1/environments/020ed26b-ae15-4783-8fb3-gd65816dc391/billOfMaterials\"\n                    }\n                },\n                \"id\": \"020ed26b-ae15-4783-8fb3-gd65816dc391\",\n                \"name\": \"example\",\n                \"organization\": {\n                    \"id\": \"9bd54270-150f-4b2a-bbb6-48dfc002ff5e\"\n                },\n                \"type\": \"SANDBOX\",\n                \"region\": \"NA\",\n                \"createdAt\": \"2020-06-09T18:07:12.221Z\",\n                \"updatedAt\": \"2021-01-21T21:42:10.815Z\",\n                \"license\": {\n                    \"id\": \"08b0cc35-7fd4-4c1f-9f84-6b323124cc72\"\n                }\n            }\n        ]\n    },\n    \"size\": 1\n}"
+				}
+			]
+		},
+		{
+			"name": "Step 2: Get a list of integrations",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function() {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Response body JSON's _embedded:integrations is an array of objs w/ IDs\", function() {",
+							"    const jsonData = pm.response.json();",
+							"    const integrationList = jsonData._embedded.integrations;",
+							"    pm.expect(integrationList).to.be.an('array');",
+							"    if (integrationList.length > 0) {",
+							"        console.log(\"Found \" + integrationList.length + \" Integration(s)\");",
+							"        let intid = integrationList[0].id",
+							"        pm.expect(intid).to.be.a('string');",
+							"        let intverid = integrationList[0]._embedded.versions[0].id;",
+							"        pm.expect(intverid).to.be.a('string');",
+							"        pm.environment.set(\"integrationID\", intid);",
+							"        console.log(\"integrationID is now: \" + pm.environment.get(\"integrationID\"));",
+							"        pm.environment.set(\"integrationVersionID\", intverid);",
+							"        console.log(\"integrationVersionID is now: \" + pm.environment.get(\"integrationVersionID\"));",
+							"        ",
+							"        ",
+							"    } else {",
+							"        console.log(\"No Integrations!\");",
+							"    }",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{apiPath}}/environments/{{envID}}/integrations?expand=latestVersion&filter=(name co \"PingID\")",
+					"host": [
+						"{{apiPath}}"
+					],
+					"path": [
+						"environments",
+						"{{envID}}",
+						"integrations"
+					],
+					"query": [
+						{
+							"key": "expand",
+							"value": "latestVersion"
+						},
+						{
+							"key": "filter",
+							"value": "(name co \"PingID\")"
+						}
+					]
+				}
+			},
+			"response": [
+				{
+					"name": "Step 2: Get a list of integrations",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{apiPath}}/environments/{{envID}}/integrations?expand=latestVersion&filter=(name co \"PingID\")",
+							"host": [
+								"{{apiPath}}"
+							],
+							"path": [
+								"environments",
+								"{{envID}}",
+								"integrations"
+							],
+							"query": [
+								{
+									"key": "expand",
+									"value": "latestVersion"
+								},
+								{
+									"key": "filter",
+									"value": "(name co \"PingID\")"
+								}
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/hal+json;charset=UTF-8"
+						},
+						{
+							"key": "Content-Length",
+							"value": "6042"
+						},
+						{
+							"key": "Connection",
+							"value": "keep-alive"
+						},
+						{
+							"key": "Date",
+							"value": "Wed, 17 Mar 2021 22:10:26 GMT"
+						},
+						{
+							"key": "x-amzn-RequestId",
+							"value": "8595c1d1-1606-423b-9665-8b93354bc90b"
+						},
+						{
+							"key": "Access-Control-Allow-Origin",
+							"value": "*"
+						},
+						{
+							"key": "Correlation-Id",
+							"value": "8595c1d1-1606-423b-9665-8b93354bc90b"
+						},
+						{
+							"key": "Access-Control-Allow-Headers",
+							"value": "Content-Type,Content-Disposition,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,Correlation-Id"
+						},
+						{
+							"key": "x-amz-apigw-id",
+							"value": "cWis6GhbvHcF0mg="
+						},
+						{
+							"key": "Cache-Control",
+							"value": "no-cache, no-store, max-age=0, must-revalidate"
+						},
+						{
+							"key": "Expires",
+							"value": "0"
+						},
+						{
+							"key": "Access-Control-Allow-Methods",
+							"value": "OPTIONS,GET"
+						},
+						{
+							"key": "X-Amzn-Trace-Id",
+							"value": "Root=1-60527e52-2b1d359e7ce3c58210898f4b;Sampled=0"
+						},
+						{
+							"key": "Pragma",
+							"value": "no-cache"
+						},
+						{
+							"key": "Access-Control-Allow-Credentials",
+							"value": "true"
+						},
+						{
+							"key": "X-Cache",
+							"value": "Miss from cloudfront"
+						},
+						{
+							"key": "Via",
+							"value": "1.1 a939790ed0d3868e81621f63b9b3d08c.cloudfront.net (CloudFront)"
+						},
+						{
+							"key": "X-Amz-Cf-Pop",
+							"value": "DEN52-C1"
+						},
+						{
+							"key": "X-Amz-Cf-Id",
+							"value": "6kQC2ZdPSh4RqAZ_stVHu7KDTRx1kGIBvtuZ7vXDMqDn_j64mH-Nvw=="
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"_links\": {\n        \"self\": {\n            \"href\": \"https://example.com/v1/environments/020ed26b-ae15-5283-8fb3-gd65816dc766/integrations\"\n        }\n    },\n    \"_embedded\": {\n        \"integrations\": [\n            {\n                \"_links\": {\n                    \"self\": {\n                        \"href\": \"https://example.com/v1/environments/020ed26b-ae15-5283-8fb3-gd65816dc766/integrations/c290da08-0151-45f6-a651-0efg0805ca34\"\n                    },\n                    \"environment\": {\n                        \"href\": \"https://example.com/v1/environments/020ed26b-ae15-5283-8fb3-gd65816dc766\"\n                    },\n                    \"versions\": {\n                        \"href\": \"https://example.com/v1/environments/020ed26b-ae15-5283-8fb3-gd65816dc766/integrations/c290da08-0151-45f6-a651-0efg0805ca34/versions\"\n                    }\n                },\n                \"_embedded\": {\n                    \"versions\": [\n                        {\n                            \"id\": \"a9c8a539-191e-4015-ab52-c1943d2142a1\",\n                            \"name\": \"PingID Integration Kits\",\n                            \"description\": \"Integrate PingID as an authentication solution with PingFederate either as a federation solution or as an identity bridge.\",\n                            \"integration\": {\n                                \"id\": \"c290da08-0151-45f6-a651-0efg0805ca34\"\n                            },\n                            \"type\": \"PRODUCT_INTEGRATION_KIT\",\n                            \"number\": \"2.11\",\n                            \"releasedOn\": \"2020-11-30\",\n                            \"integratedWith\": {\n                                \"name\": \"PINGFEDERATE\"\n                            },\n                            \"documentationUrl\": \"https://docs.pingidentity.com/bundle/pingid/page/kor1564020462373.html\"\n                        }\n                    ]\n                },\n                \"id\": \"c290da08-0151-45f6-a651-0efg0805ca34\",\n                \"name\": \"PingFederate PingID Integration Kit\",\n                \"thirdParty\": {\n                    \"companyName\": \"Ping Identity\"\n                },\n                \"publisher\": \"Ping Identity\",\n                \"tags\": [\n                    \"PROVISIONING\",\n                    \"MFA\"\n                ],\n                \"pingProductNames\": [\n                    \"PINGFEDERATE\"\n                ],\n                \"marketingLandingPageUrl\": \"https://support.pingidentity.com/s/marketplace-integration/a7i1W000000CfnAQAS/pingid-for-pingfederate\",\n                \"createdAt\": \"2021-01-22T00:52:32.812Z\"\n            },\n            {\n                \"_links\": {\n                    \"self\": {\n                        \"href\": \"https://example.com/v1/environments/020ed26b-ae15-5283-8fb3-gd65816dc766/integrations/4d6c4b24-3a30-41fd-b80e-cc6c6004cbd9\"\n                    },\n                    \"environment\": {\n                        \"href\": \"https://example.com/v1/environments/020ed26b-ae15-5283-8fb3-gd65816dc766\"\n                    },\n                    \"versions\": {\n                        \"href\": \"https://example.com/v1/environments/020ed26b-ae15-5283-8fb3-gd65816dc766/integrations/4d6c4b24-3a30-41fd-b80e-cc6c6004cbd9/versions\"\n                    }\n                },\n                \"_embedded\": {\n                    \"versions\": []\n                },\n                \"id\": \"4d6c4b24-3a30-41fd-b80e-cc6c6004cbd9\",\n                \"name\": \"PingFederate PingID Connector\",\n                \"thirdParty\": {\n                    \"companyName\": \"Ping Identity\"\n                },\n                \"publisher\": \"Ping Identity\",\n                \"tags\": [\n                    \"PROVISIONING\"\n                ],\n                \"pingProductNames\": [\n                    \"PINGFEDERATE\"\n                ],\n                \"marketingLandingPageUrl\": \"https://support.pingidentity.com/s/marketplace-integration/a7i1W0000004IDHQA2/pingid-connector\",\n                \"createdAt\": \"2021-01-22T00:53:09.491Z\"\n            },\n            {\n                \"_links\": {\n                    \"self\": {\n                        \"href\": \"https://example.com/v1/environments/020ed26b-ae15-5283-8fb3-gd65816dc766/integrations/d2b1e7e9-7fc8-4a4a-de61-da23d7825404\"\n                    },\n                    \"environment\": {\n                        \"href\": \"https://example.com/v1/environments/020ed26b-ae15-5283-8fb3-gd65816dc766\"\n                    },\n                    \"versions\": {\n                        \"href\": \"https://example.com/v1/environments/020ed26b-ae15-5283-8fb3-gd65816dc766/integrations/d2b1e7e9-7fc8-4a4a-de61-da23d7825404/versions\"\n                    }\n                },\n                \"_embedded\": {\n                    \"versions\": []\n                },\n                \"id\": \"d2b1e7e9-7fc8-4a4a-de61-da23d7825404\",\n                \"name\": \"PingFederate PingID SDK Connector\",\n                \"thirdParty\": {\n                    \"companyName\": \"Ping Identity\"\n                },\n                \"publisher\": \"Ping Identity\",\n                \"tags\": [\n                    \"PROVISIONING\",\n                    \"MFA\"\n                ],\n                \"pingProductNames\": [\n                    \"PINGFEDERATE\"\n                ],\n                \"marketingLandingPageUrl\": \"https://support.pingidentity.com/s/marketplace-integration/a7i1W000000Cfn5QAC/pingid-sdk-integration-kit\",\n                \"createdAt\": \"2021-01-22T00:53:10.335Z\"\n            },\n            {\n                \"_links\": {\n                    \"self\": {\n                        \"href\": \"https://example.com/v1/environments/020ed26b-ae15-5283-8fb3-gd65816dc766/integrations/663ab657-3920-40df-9fb8-b6ccd12c5726\"\n                    },\n                    \"environment\": {\n                        \"href\": \"https://example.com/v1/environments/020ed26b-ae15-5283-8fb3-gd65816dc766\"\n                    },\n                    \"versions\": {\n                        \"href\": \"https://example.com/v1/environments/020ed26b-ae15-5283-8fb3-gd65816dc766/integrations/663ab657-3920-40df-9fb8-b6ccd12c5726/versions\"\n                    }\n                },\n                \"_embedded\": {\n                    \"versions\": [\n                        {\n                            \"id\": \"6b816117-6989-4928-b270-4a0e7d6a43cb\",\n                            \"name\": \"PingID SDK Integration Kits\",\n                            \"description\": \"PingID SDK is a mobile SDK for support of PingID multifactor authentication for customer use cases, on organizations' own mobile applications.\",\n                            \"integration\": {\n                                \"id\": \"663ab657-3920-40df-9fb8-b6ccd12c5726\"\n                            },\n                            \"type\": \"PRODUCT_INTEGRATION_KIT\",\n                            \"number\": \"1.1\",\n                            \"releasedOn\": \"2021-01-11\",\n                            \"integratedWith\": {\n                                \"name\": \"PINGFEDERATE\",\n                                \"minVersion\": \"9.0\"\n                            },\n                            \"documentationUrl\": \"https://docs.pingidentity.com/bundle/integrations/page/zyw1565632179137.html\"\n                        }\n                    ]\n                },\n                \"id\": \"663ab657-3920-40df-9fb8-b6ccd12c5726\",\n                \"name\": \"PingFederate PingID SDK Integration Kit\",\n                \"thirdParty\": {\n                    \"companyName\": \"Ping Identity\"\n                },\n                \"publisher\": \"Ping Identity\",\n                \"tags\": [\n                    \"PROVISIONING\",\n                    \"MFA\"\n                ],\n                \"pingProductNames\": [\n                    \"PINGFEDERATE\"\n                ],\n                \"marketingLandingPageUrl\": \"https://support.pingidentity.com/s/marketplace-integration/a7i1W000000Cfn5QAC/pingid-sdk-integration-kit\",\n                \"createdAt\": \"2021-01-22T00:52:33.713Z\"\n            }\n        ]\n    },\n    \"size\": 4\n}"
+				}
+			]
+		},
+		{
+			"name": "Step 3: Download the integration zip file",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function() {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Download integration\", function() {",
+							"    const info = pm.response.contentInfo();",
+							"    const headData = pm.response.headers;",
+							"    pm.expect(pm.response.headers.get('Content-Type')).to.eql('application/zip');",
+							"    console.log(\"Retrieved \" + info.fileName + \" from the integration catalog. The sha256 value is \" + pm.response.headers.get('x-amz-meta-etag'))",
+							"",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{apiPath}}/environments/{{envID}}/integrations/{{integrationID}}/versions/{{integrationVersionID}}/asset",
+					"host": [
+						"{{apiPath}}"
+					],
+					"path": [
+						"environments",
+						"{{envID}}",
+						"integrations",
+						"{{integrationID}}",
+						"versions",
+						"{{integrationVersionID}}",
+						"asset"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

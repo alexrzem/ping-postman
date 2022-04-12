@@ -1,0 +1,1363 @@
+{
+	"info": {
+		"_postman_id": "cd6fe019-6a21-4a80-b08e-edaf551e1784",
+		"name": "PingOne Use Case:  Use LOGIN and AGREEMENT Actions to Authenticate Users",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Step 1: Create a web application",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = JSON.parse(responseBody);",
+							"postman.setEnvironmentVariable(\"webApp4AgreementId\", jsonData.id);",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"type": "text",
+						"value": "Bearer {{bearerToken}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"enabled\": true,\n    \"name\": \"WebAppWithAgreement_{{$timestamp}}\",\n    \"description\": \"This is an OIDC Web application.\",\n    \"type\": \"WEB_APP\",\n    \"protocol\": \"OPENID_CONNECT\",\n    \"grantTypes\": [\n        \"AUTHORIZATION_CODE\"\n    ],\n    \"redirectUris\": [\n        \"https://www.google.com\"\n    ],\n    \"responseTypes\": [\n        \"CODE\"\n    ],\n    \"tokenEndpointAuthMethod\": \"CLIENT_SECRET_BASIC\"\n}"
+				},
+				"url": {
+					"raw": "{{apiPath}}/environments/{{envID}}/applications",
+					"host": [
+						"{{apiPath}}"
+					],
+					"path": [
+						"environments",
+						"{{envID}}",
+						"applications"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Step 2: Get the application secret",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = JSON.parse(responseBody);",
+							"postman.setEnvironmentVariable(\"agreementAppSecret\", jsonData.secret);",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer {{accessToken}}"
+					}
+				],
+				"url": {
+					"raw": "{{apiPath}}/environments/{{envID}}/applications/{{webApp4AgreementId}}/secret",
+					"host": [
+						"{{apiPath}}"
+					],
+					"path": [
+						"environments",
+						"{{envID}}",
+						"applications",
+						"{{webApp4AgreementId}}",
+						"secret"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Step 3: Get languages",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"  pm.response.to.have.status(200);",
+							"});",
+							"",
+							"const jsonData = pm.response.json();",
+							"const langList = jsonData._embedded.languages;",
+							"",
+							"pm.test(\"Response body JSON's _embedded:languages is an array of objs w/ IDs\", function () {",
+							"  pm.expect(langList).to.be.an('array');",
+							"  if (langList.length > 0) {",
+							"    console.log(\"Found \" + langList.length + \" Language(s)\");",
+							"    langList.forEach((elem) => {",
+							"      pm.expect(elem.id).to.be.a('string');",
+							"    });",
+							"    pm.environment.set(\"langID\", langList[0].id);",
+							"    console.log(\"langID is now: \" + pm.environment.get(\"langID\"));",
+							"  } else {",
+							"    console.log(\"No Languages!\");",
+							"  }",
+							"});",
+							"",
+							"pm.test(\"Look for the default Language's 'locale'\", function () {",
+							"  if (langList && langList.length > 0) {",
+							"    const defaultLangFilter = langList.filter(e => e.default === true);",
+							"    if (defaultLangFilter.length > 0) {",
+							"      pm.expect(defaultLangFilter).to.be.an('array').and.have.lengthOf(1);",
+							"      pm.expect(defaultLangFilter[0].name).to.be.a('string');",
+							"      pm.expect(defaultLangFilter[0].locale).to.be.a('string');",
+							"      console.log(\"Default Language is: \" + defaultLangFilter[0].name);",
+							"      pm.environment.set(\"defaultLangLocale\", defaultLangFilter[0].locale);",
+							"      console.log(\"defaultLangLocale is now: \" + pm.environment.get(\"defaultLangLocale\"));",
+							"    }",
+							"",
+							"    if (defaultLangFilter.length == 0) {",
+							"      console.log(\"No default Language found!\")",
+							"    }",
+							"  } else {",
+							"    console.log(\"Problem finding default Language!\");",
+							"    pm.expect.fail();",
+							"  }",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"warning": "This is a duplicate header and will be overridden by the Authorization header generated by Postman.",
+						"key": "Authorization",
+						"value": "Bearer {{jwtToken}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{apiPath}}/environments/{{envID}}/languages",
+					"host": [
+						"{{apiPath}}"
+					],
+					"path": [
+						"environments",
+						"{{envID}}",
+						"languages"
+					]
+				},
+				"description": "src/management-apis/language-management/languages/read-languages/index.mdx"
+			},
+			"response": []
+		},
+		{
+			"name": "Step 4: Create an agreement",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 201\", function () {",
+							"  pm.response.to.have.status(201);",
+							"});",
+							"",
+							"pm.test(\"Response body JSON contains name and id strings\", function () {",
+							"  const jsonData = pm.response.json();",
+							"  pm.expect(jsonData.name).to.be.a('string');",
+							"  pm.expect(jsonData.id).to.be.a('string');",
+							"  pm.environment.set(\"agreeID\", jsonData.id);",
+							"  console.log(\"agreeID is now: \" + pm.environment.get(\"agreeID\"));",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"name\": \"Agreement_{{$timestamp}}\",\n  \"#description\": \"Test Description - created via CREATE Agreement request\",\n  \"#reconsentPeriodDays\": 1,\n  \"enabled\": false\n}"
+				},
+				"url": {
+					"raw": "{{apiPath}}/environments/{{envID}}/agreements",
+					"host": [
+						"{{apiPath}}"
+					],
+					"path": [
+						"environments",
+						"{{envID}}",
+						"agreements"
+					]
+				},
+				"description": "#### Agreement Data Model\n\nProperty | Mutable? | Required? | Type | Notes\n-------- | -------- | --------- | ---- | -----\nname | Y | Y | String; must be unique w/in Env, max 256 characters `^[\\p{L}\\p{M}\\p{N}\\p{Zs}\\p{P}]+$` | Unicode letters, combining marks, numeric characters, whitespace, punctuation characters.\ndescription | Y | N | String; max 1024 characters `^[\\p{L}\\p{M}\\p{N}\\p{Zs}\\p{P}]+$` |\nreconsentPeriodDays | Y | N | Number | The number of days until a consent to this agreement “expires” and the user is prompted again for consent.\nenabled | Y | Y | Boolean | Must be `false`."
+			},
+			"response": []
+		},
+		{
+			"name": "Step 5: Create an agreement language",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 201\", function () {",
+							"  pm.response.to.have.status(201);",
+							"});",
+							"",
+							"pm.test(\"Response body JSON contains locale and id strings\", function () {",
+							"  const jsonData = pm.response.json();",
+							"  pm.expect(jsonData.locale).to.be.a('string');",
+							"  pm.environment.set(\"agreeLangLocale\", jsonData.locale);",
+							"  console.log(\"agreeLangLocale is now: \" + pm.environment.get(\"agreeLangLocale\"));",
+							"  pm.expect(jsonData.id).to.be.a('string');",
+							"  pm.environment.set(\"agreeLangID\", jsonData.id);",
+							"  console.log(\"agreeLangID is now: \" + pm.environment.get(\"agreeLangID\"));",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"locale\": \"{{defaultLangLocale}}\",\n  \"displayName\": \"Language_{{$timestamp}}\"\n}"
+				},
+				"url": {
+					"raw": "{{apiPath}}/environments/{{envID}}/agreements/{{agreeID}}/languages",
+					"host": [
+						"{{apiPath}}"
+					],
+					"path": [
+						"environments",
+						"{{envID}}",
+						"agreements",
+						"{{agreeID}}",
+						"languages"
+					]
+				},
+				"description": "#### Agreement Data Model\n\nProperty | Mutable? | Required? | Type | Notes\n-------- | -------- | --------- | ---- | -----\nlocale | N | Y | String; must be unique w/in Agreement & be a valid language tag as defined in [RFC 5646](https://tools.ietf.org/html/rfc5646) | Examples: `fr`, `en-US`, `es-419`, `az-Arab`, `x-pig-latin`, `man-Nkoo-GN`.\ndisplayName | Y | Y | String; max 256 characters | A name for the terms of service in the language that can be used on end user screens."
+			},
+			"response": []
+		},
+		{
+			"name": "Step 6: Create an ageement revision",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 201\", function () {",
+							"  pm.response.to.have.status(201);",
+							"});",
+							"",
+							"pm.test(\"Response body JSON contains effectiveAt and id strings\", function () {",
+							"  const jsonData = pm.response.json();",
+							"  pm.expect(jsonData.effectiveAt).to.be.a('string');",
+							"  pm.expect(jsonData.id).to.be.a('string');",
+							"  pm.environment.set(\"agreeLangRevisionID\", jsonData.id);",
+							"  console.log(\"agreeLangRevisionID is now: \" + pm.environment.get(\"agreeLangRevisionID\"));",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"const now = new Date();",
+							"pm.environment.set(\"agreeLangRevisionEffectiveAt\", now.toISOString());",
+							"console.log(\"agreeLangRevisionEffectiveAt is now: \" + pm.environment.get(\"agreeLangRevisionEffectiveAt\"));"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"effectiveAt\": \"{{agreeLangRevisionEffectiveAt}}\",\n    \"requireReconsent\": true,\n    \"contentType\": \"text/html\",\n    \"text\": \"<b>These Terms</b> and <i>Conditions</i> constitute a legally binding agreement made between you, whether personally or on behalf of an entity ('you') and business entity name] ('we', 'us' or 'our'),concerning your access to and use of the website as well as any other media form, media channel, mobile website or mobile application related, linked, or otherwise connected thereto (collectively, the 'Site').<h1>This is Heading 1</h1> Some text <p>This is a paragraph.</p> \"\n}"
+				},
+				"url": {
+					"raw": "{{apiPath}}/environments/{{envID}}/agreements/{{agreeID}}/languages/{{agreeLangID}}/revisions",
+					"host": [
+						"{{apiPath}}"
+					],
+					"path": [
+						"environments",
+						"{{envID}}",
+						"agreements",
+						"{{agreeID}}",
+						"languages",
+						"{{agreeLangID}}",
+						"revisions"
+					]
+				},
+				"description": "#### Revision Data Model\n\nProperty | Mutable? | Required? | Type | Notes\n-------- | -------- | --------- | ---- | -----\neffectiveAt | Y* | Y | Date-time String in ISO 8601 format (yyyy-MM-dd'T'HH:mm:ss.SSSZ); must be unique w/in Language | Can only be a present or future date.<br>*Can only be modified if effectiveAt is > Date.now.\nrequireReconsent | Y | Y | Boolean | Denotes if users will be required to consent to the language revision once it is effective. Effectively makes consents to older revisions invalid.\ncontentType | N | Y | One of: `text/html`, `text/plain` | The content type of text. Synonymous with media types (MIME).\ntext | N | Y | string; max 16,000 characters `^[\\p{L}\\p{M}\\p{N}\\p{Zs}\\p{P}]+$`| The text for the revision that will be uploaded to s3.<br>`\\n` is used by the UI for encoding a return."
+			},
+			"response": []
+		},
+		{
+			"name": "Step 7: Update the agreement language",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"  pm.response.to.have.status(200);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"locale\": \"{{defaultLangLocale}}\",\n  \"displayName\": \"Language-UPDATED_{{$timestamp}}\",\n  \"enabled\": true\n}"
+				},
+				"url": {
+					"raw": "{{apiPath}}/environments/{{envID}}/agreements/{{agreeID}}/languages/{{agreeLangID}}",
+					"host": [
+						"{{apiPath}}"
+					],
+					"path": [
+						"environments",
+						"{{envID}}",
+						"agreements",
+						"{{agreeID}}",
+						"languages",
+						"{{agreeLangID}}"
+					]
+				},
+				"description": "See CREATE request for data model."
+			},
+			"response": []
+		},
+		{
+			"name": "Step 8: Enable the agreement",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"  pm.response.to.have.status(200);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"name\": \"Agreement-UPDATED_{{$timestamp}}\",\n  \"#description\": \"Test Description - updated via UPDATE Agreement request\",\n  \"#reconsentPeriodDays\": 2,\n  \"enabled\": true\n}"
+				},
+				"url": {
+					"raw": "{{apiPath}}/environments/{{envID}}/agreements/{{agreeID}}",
+					"host": [
+						"{{apiPath}}"
+					],
+					"path": [
+						"environments",
+						"{{envID}}",
+						"agreements",
+						"{{agreeID}}"
+					]
+				},
+				"description": "See CREATE request for data model."
+			},
+			"response": []
+		},
+		{
+			"name": "Step 9: Create a sign-on policy",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = JSON.parse(responseBody);",
+							"postman.setEnvironmentVariable(\"agreementSignonPolicyID\", jsonData.id);",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"type": "text",
+						"value": "Bearer {{bearerToken}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"name\": \"Agreement_UseCasePolicy_{{$timestamp}}\",\n  \"default\": \"false\",\n  \"description\": \"A new Agreement sign-on policy.\"\n}"
+				},
+				"url": {
+					"raw": "{{apiPath}}/environments/{{envID}}/signOnPolicies",
+					"host": [
+						"{{apiPath}}"
+					],
+					"path": [
+						"environments",
+						"{{envID}}",
+						"signOnPolicies"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Step 10: Create the login sign-on policy action",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = JSON.parse(responseBody);",
+							"postman.setEnvironmentVariable(\"loginPolicyActionID\", jsonData.id);",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"priority\": 1,\n    \"type\": \"LOGIN\"\n}"
+				},
+				"url": {
+					"raw": "{{apiPath}}/environments/{{envID}}/signOnPolicies/{{agreementSignonPolicyID}}/actions",
+					"host": [
+						"{{apiPath}}"
+					],
+					"path": [
+						"environments",
+						"{{envID}}",
+						"signOnPolicies",
+						"{{agreementSignonPolicyID}}",
+						"actions"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Step 11: Create the agreement sign-on policy action",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = JSON.parse(responseBody);",
+							"postman.setEnvironmentVariable(\"agreementSopActionID\", jsonData.id);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"type": "text",
+						"value": "Bearer {{bearerToken}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"priority\": 50,\n    \"agreement\": {\n        \"id\": \"{{agreeID}}\"\n        },\n    \"type\": \"AGREEMENT\"\n}"
+				},
+				"url": {
+					"raw": "{{apiPath}}/environments/{{envID}}/signOnPolicies/{{agreementSignonPolicyID}}/actions",
+					"host": [
+						"{{apiPath}}"
+					],
+					"path": [
+						"environments",
+						"{{envID}}",
+						"signOnPolicies",
+						"{{agreementSignonPolicyID}}",
+						"actions"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Step 12: Assign the sign-on policy to the web application",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"type": "text",
+						"value": "Bearer {{bearerToken}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"priority\": 10,\n  \"signOnPolicy\": {\n  \t\"id\": \"{{agreementSignonPolicyID}}\"\n  }\n}"
+				},
+				"url": {
+					"raw": "{{apiPath}}/environments/{{envID}}/applications/{{webApp4AgreementId}}/signOnPolicyAssignments",
+					"host": [
+						"{{apiPath}}"
+					],
+					"path": [
+						"environments",
+						"{{envID}}",
+						"applications",
+						"{{webApp4AgreementId}}",
+						"signOnPolicyAssignments"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Step 13: Create a population for agreement users",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 201\", function() {",
+							"    pm.response.to.have.status(201);",
+							"});",
+							"",
+							"pm.test(\"Response body JSON contains name and id strings\", function() {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData.name).to.be.a('string');",
+							"    pm.expect(jsonData.id).to.be.a('string');",
+							"    pm.environment.set(\"AgreementPopID\", jsonData.id);",
+							"    console.log(\"AgreementPopID is now: \" + pm.environment.get(\"AgreementPopID\"));",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "content-type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"name\": \"AgreementPopulation_{{$timestamp}}\",\n    \"description\": \"Population for agreement users\"\n}"
+				},
+				"url": {
+					"raw": "{{apiPath}}/environments/{{envID}}/populations",
+					"host": [
+						"{{apiPath}}"
+					],
+					"path": [
+						"environments",
+						"{{envID}}",
+						"populations"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Step 14: Create user",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 201\", function () {",
+							"    pm.response.to.have.status(201);",
+							"});",
+							"",
+							"pm.test(\"Response body JSON contains createdAt username and id strings\", function () {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData.createdAt).to.be.a('string');",
+							"    pm.expect(jsonData.username).to.be.a('string');",
+							"    pm.expect(jsonData.id).to.be.a('string');",
+							"    pm.environment.set(\"agreementUserID\", jsonData.id);",
+							"    pm.environment.set(\"agreementUsername\", jsonData.username);",
+							"    console.log(\"agreementUserID is now: \" + pm.environment.get(\"agreementUserID\"));",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "content-type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"email\": \"{{email}}\",\n    \"name\": {\n        \"given\": \"Test\",\n        \"family\": \"AgreementUser\"\n    },\n    \"population\": {\n        \"id\": \"{{AgreementPopID}}\"\n    },\n    \"username\": \"agreement_user_{{$timestamp}}\"\n}"
+				},
+				"url": {
+					"raw": "{{apiPath}}/environments/{{envID}}/users",
+					"host": [
+						"{{apiPath}}"
+					],
+					"path": [
+						"environments",
+						"{{envID}}",
+						"users"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Step 15: Set user password",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/vnd.pingidentity.password.set+json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"value\": \"{{userPassword}}\",\n  \"forceChange\": false\n}"
+				},
+				"url": {
+					"raw": "{{apiPath}}/environments/{{envID}}/users/{{agreementUserID}}/password",
+					"host": [
+						"{{apiPath}}"
+					],
+					"path": [
+						"environments",
+						"{{envID}}",
+						"users",
+						"{{agreementUserID}}",
+						"password"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Step 16: Send an authorization request",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"const url = require('url');",
+							"const querystring = require('querystring');",
+							"",
+							"console.log(\"<---------------Response info:\");",
+							"pm.test(\"Status code is 302\", function () {",
+							"  pm.response.to.have.status(302);",
+							"});",
+							"",
+							"const loc = url.parse(pm.response.headers.get(\"Location\"));",
+							"var params = {};",
+							"if (loc.hash) {",
+							"  params = querystring.parse(loc.hash.substring(1));",
+							"} else {",
+							"  params = querystring.parse(loc.query);",
+							"}",
+							"",
+							"pm.test(\"Location header contains a 'flowId', an auth 'code', or an 'access_token' and/or 'id_token'\", function () {",
+							"  if (params.flowId) {",
+							"    pm.expect(params.flowId).to.be.a('string');",
+							"    pm.environment.set('flowID', params.flowId);",
+							"    console.log(\"flowID is now: \" + pm.environment.get(\"flowID\"));",
+							"  } else if (params.code) {",
+							"    if (pm.environment.get(\"expectState\") === \"true\") {",
+							"      if (params.state) {",
+							"        pm.expect(params.state).to.equal(pm.variables.get(\"state\"));",
+							"      } else {",
+							"        console.log(\"Could not find state in Location header value.\");",
+							"        pm.expect.fail(\"Could not find state in Location header value.\");",
+							"      }",
+							"    } else if (params.state) {",
+							"      console.log(\"Unexpected state in Location header value.\");",
+							"      pm.expect.fail(\"Unexpected state in Location header value.\");",
+							"    }",
+							"    pm.expect(params.code).to.be.a('string');",
+							"    pm.environment.set(\"authCode\", params.code);",
+							"    console.log(\"authCode is set\");",
+							"  } else if (params.access_token || params.id_token) {",
+							"    if (pm.environment.get(\"expectState\") === \"true\") {",
+							"      if (params.state) {",
+							"        pm.expect(params.state).to.equal(pm.variables.get(\"state\"));",
+							"      } else {",
+							"        console.log(\"Could not find state in Location header value.\");",
+							"        pm.expect.fail(\"Could not find state in Location header value.\");",
+							"      }",
+							"    } else if (params.state) {",
+							"      console.log(\"Unexpected state in Location header value.\");",
+							"      pm.expect.fail(\"Unexpected state in Location header value.\");",
+							"    }",
+							"    if (params.access_token) {",
+							"      pm.expect(params.access_token).to.be.a('string');",
+							"      pm.environment.set(\"oauthToken\", params.access_token);",
+							"      console.log(\"oauthToken is set\");",
+							"    }",
+							"    if (params.id_token) {",
+							"      pm.expect(params.id_token).to.be.a('string');",
+							"      pm.environment.set(\"idToken\", params.id_token);",
+							"      console.log(\"idToken is set\");",
+							"    }",
+							"  } else if (params.error) {",
+							"    console.log(\"An error occurred!\");",
+							"    console.log(\"Error: \" + params.error);",
+							"    if (params.error_description) {",
+							"      console.log(\"Error description: \" + params.error_description);",
+							"    }",
+							"    pm.expect.fail(\"Location header contains an error.\");",
+							"  } else {",
+							"    console.log(\"Could not find flowId, access/id_token, or error in Location header value.\");",
+							"    console.log(\"Location: \" + pm.response.headers.get(\"Location\"));",
+							"    pm.expect.fail(\"Could not find flowId, access/id_token, or error in Location header value.\");",
+							"  }",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{authPath}}/{{envID}}/as/authorize?response_type=code&client_id={{webApp4AgreementId}}&redirect_uri=https://www.google.com&scope=openid",
+					"host": [
+						"{{authPath}}"
+					],
+					"path": [
+						"{{envID}}",
+						"as",
+						"authorize"
+					],
+					"query": [
+						{
+							"key": "response_type",
+							"value": "code",
+							"description": "Required"
+						},
+						{
+							"key": "client_id",
+							"value": "{{webApp4AgreementId}}",
+							"description": "Required"
+						},
+						{
+							"key": "redirect_uri",
+							"value": "https://www.google.com",
+							"description": "Required "
+						},
+						{
+							"key": "scope",
+							"value": "openid"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Step 17: Get the flow",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{authPath}}/{{envID}}/flows/{{flowID}}",
+					"host": [
+						"{{authPath}}"
+					],
+					"path": [
+						"{{envID}}",
+						"flows",
+						"{{flowID}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Step 18: Submit login credentials",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/vnd.pingidentity.usernamePassword.check+json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"username\": \"{{agreementUsername}}\",\n    \"password\": \"{{userPassword}}\"\n}"
+				},
+				"url": {
+					"raw": "{{authPath}}/{{envID}}/flows/{{flowID}}",
+					"host": [
+						"{{authPath}}"
+					],
+					"path": [
+						"{{envID}}",
+						"flows",
+						"{{flowID}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Step 19: Consent to agreement",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/vnd.pingidentity.user.consent+json"
+					},
+					{
+						"description": "Use this for localhost",
+						"key": "Cookie",
+						"value": "ST={{sessionToken}}",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"accept\": true\n}"
+				},
+				"url": {
+					"raw": "{{authPath}}/{{envID}}/flows/{{flowID}}",
+					"host": [
+						"{{authPath}}"
+					],
+					"path": [
+						"{{envID}}",
+						"flows",
+						"{{flowID}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Step 20: Call the resume endpoint",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"const url = require('url');",
+							"const querystring = require('querystring');",
+							"const Cookie = require('postman-collection').Cookie;",
+							"",
+							"pm.test(\"Status code is 302\", function () {",
+							"  pm.response.to.have.status(302);",
+							"});",
+							"",
+							"const loc = url.parse(pm.response.headers.get(\"Location\"));",
+							"var params = {};",
+							"if (loc.hash) {",
+							"  params = querystring.parse(loc.hash.substring(1));",
+							"} else {",
+							"  params = querystring.parse(loc.query);",
+							"}",
+							"",
+							"pm.test(\"Location header contains an 'access_token' and/or 'id_token', or a 'code'\", function () {",
+							"  if (params.access_token || params.id_token) {",
+							"    if (params.access_token) {",
+							"      pm.expect(params.access_token).to.be.a('string');",
+							"      pm.environment.set(\"oauthToken\", params.access_token);",
+							"      console.log(\"oauthToken is set\");",
+							"    }",
+							"    if (params.id_token) {",
+							"      pm.expect(params.id_token).to.be.a('string');",
+							"      pm.environment.set(\"idToken\", params.id_token);",
+							"      console.log(\"idToken is set\");",
+							"    }",
+							"  } else if (params.code) {",
+							"    pm.expect(params.code).to.be.a('string');",
+							"    pm.environment.set(\"authCode\", params.code);",
+							"    console.log(\"authCode is set\");",
+							"  } else if (params.error) {",
+							"    console.log(\"An error occurred: \");",
+							"    console.log(\"Error: \" + params.error);",
+							"    if (params.error_description) {",
+							"      console.log(\"Error description: \" + params.error_description);",
+							"    }",
+							"    pm.expect.fail();",
+							"  } else {",
+							"    console.log(\"Could not find access token, ID token, or error in Location header value.\");",
+							"    console.log(\"Location: \" + pm.response.headers.get(\"Location\"));",
+							"    pm.expect.fail();",
+							"  }",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Cookie",
+						"value": "ST={{sessionToken}}",
+						"disabled": true
+					},
+					{
+						"description": "Used for browsers that improperly handle SameSite=None",
+						"key": "Cookie",
+						"type": "text",
+						"value": "ST-NO-SS={{sessionToken}}",
+						"disabled": true
+					}
+				],
+				"url": {
+					"raw": "{{authPath}}/{{envID}}/as/resume?flowId={{flowID}}",
+					"host": [
+						"{{authPath}}"
+					],
+					"path": [
+						"{{envID}}",
+						"as",
+						"resume"
+					],
+					"query": [
+						{
+							"key": "flowId",
+							"value": "{{flowID}}"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Step 21: Get the access token",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function() {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Response body JSON contains an access_token string\", function() {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData.access_token).to.be.a('string');",
+							"    pm.environment.set(\"accessToken\", jsonData.access_token);",
+							"    console.log(\"accessToken is set\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "{{agreementAppSecret}}",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "{{webApp4AgreementId}}",
+							"type": "string"
+						},
+						{
+							"key": "saveHelperData",
+							"type": "any"
+						},
+						{
+							"key": "showPassword",
+							"value": false,
+							"type": "boolean"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/x-www-form-urlencoded"
+					}
+				],
+				"body": {
+					"mode": "urlencoded",
+					"urlencoded": [
+						{
+							"key": "grant_type",
+							"value": "authorization_code",
+							"description": "Required",
+							"type": "text"
+						},
+						{
+							"key": "code",
+							"value": "{{authCode}}",
+							"description": "Required",
+							"type": "text"
+						},
+						{
+							"key": "redirect_uri",
+							"value": "https://www.google.com",
+							"description": "Required",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{authPath}}/{{envID}}/as/token",
+					"host": [
+						"{{authPath}}"
+					],
+					"path": [
+						"{{envID}}",
+						"as",
+						"token"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	]
+}
